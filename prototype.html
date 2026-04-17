@@ -1,0 +1,1347 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Verdana — AI Plant Disease Detector</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --forest: #1a3a2a;
+  --moss: #2d5a3d;
+  --fern: #4a8c5c;
+  --sage: #7ab592;
+  --mint: #b2d8c4;
+  --cream: #f5f0e8;
+  --parchment: #ede5d4;
+  --earth: #8b6f47;
+  --gold: #c9a84c;
+  --white: #fdfcf8;
+}
+html { scroll-behavior: smooth; }
+body {
+  font-family: 'DM Sans', sans-serif;
+  background: var(--cream);
+  color: var(--forest);
+  overflow-x: hidden;
+}
+
+/* ── NAV (matches purchase.html exactly) ── */
+nav.site-nav {
+  position: fixed; top: 0; width: 100%; z-index: 500;
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 22px 60px;
+  background: rgba(245,240,232,0.92);
+  backdrop-filter: blur(14px);
+  border-bottom: 1px solid rgba(74,140,92,0.15);
+}
+.nav-logo { font-family: 'Playfair Display', serif; font-size: 1.7rem; color: var(--forest); letter-spacing: -0.01em; text-decoration: none; }
+.nav-logo span { color: var(--fern); font-style: italic; }
+.nav-links { display: flex; gap: 28px; list-style: none; align-items: center; flex-wrap: wrap; }
+.nav-links a { text-decoration: none; color: var(--moss); font-size: 0.85rem; font-weight: 500; letter-spacing: 0.08em; text-transform: uppercase; transition: color 0.2s; cursor: pointer; background: none; border: none; font-family: 'DM Sans', sans-serif; }
+.nav-links a:hover { color: var(--fern); }
+.nav-cta { background: var(--forest) !important; color: var(--cream) !important; padding: 10px 24px; border-radius: 100px; transition: background 0.25s !important; }
+.nav-cta:hover { background: var(--fern) !important; }
+
+/* Auth buttons in nav */
+.auth-buttons { display: flex; gap: 10px; }
+.auth-btn {
+  padding: 9px 20px; border-radius: 100px; cursor: pointer;
+  font-weight: 500; font-size: 0.82rem; letter-spacing: 0.06em;
+  text-transform: uppercase; transition: all 0.25s; font-family: 'DM Sans', sans-serif;
+}
+.auth-btn.login { background: transparent; color: var(--forest); border: 2px solid var(--forest); }
+.auth-btn.login:hover { background: var(--forest); color: var(--cream); }
+.auth-btn.signup { background: var(--fern); color: var(--cream); border: 2px solid var(--fern); }
+.auth-btn.signup:hover { background: var(--forest); border-color: var(--forest); }
+
+/* User Menu */
+.user-menu {
+  display: flex; align-items: center; gap: 12px;
+  display: none;
+}
+.user-avatar {
+  width: 36px; height: 36px; border-radius: 50%;
+  background: var(--fern); display: flex; align-items: center;
+  justify-content: center; font-weight: 600; font-size: 16px; color: var(--cream);
+}
+.user-name { font-weight: 500; color: var(--forest); font-size: 0.88rem; }
+.logout-btn {
+  background: transparent; border: 2px solid var(--forest); color: var(--forest);
+  padding: 7px 16px; border-radius: 100px; cursor: pointer;
+  font-weight: 500; font-size: 0.8rem; letter-spacing: 0.05em; text-transform: uppercase;
+  transition: all 0.25s; font-family: 'DM Sans', sans-serif;
+}
+.logout-btn:hover { background: var(--forest); color: var(--cream); }
+
+.lang-toggle {
+  padding: 8px 16px; border: 2px solid rgba(26,58,42,0.25);
+  border-radius: 100px; cursor: pointer;
+  background: transparent; color: var(--moss);
+  font-weight: 500; font-size: 0.8rem; letter-spacing: 0.05em;
+  transition: all 0.25s; font-family: 'DM Sans', sans-serif;
+}
+.lang-toggle:hover { border-color: var(--fern); color: var(--fern); }
+
+/* ── MODAL ── */
+.modal {
+  display: none; position: fixed; top: 0; left: 0;
+  width: 100%; height: 100%; background: rgba(26,58,42,0.85);
+  z-index: 2000; justify-content: center; align-items: center;
+  backdrop-filter: blur(6px);
+}
+.modal-content {
+  background: var(--white); padding: 48px;
+  border-radius: 28px; max-width: 500px; width: 90%;
+  max-height: 90vh; overflow-y: auto; position: relative;
+  box-shadow: 0 32px 64px rgba(26,58,42,0.25);
+  animation: modalFadeIn 0.3s ease;
+  border: 1px solid rgba(74,140,92,0.1);
+}
+@keyframes modalFadeIn {
+  from { opacity: 0; transform: scale(0.93) translateY(10px); }
+  to { opacity: 1; transform: scale(1) translateY(0); }
+}
+.close-modal {
+  position: absolute; top: 20px; right: 24px; font-size: 26px;
+  color: var(--sage); cursor: pointer; transition: all 0.25s;
+  width: 34px; height: 34px; display: flex; align-items: center;
+  justify-content: center; border-radius: 50%;
+}
+.close-modal:hover { color: var(--forest); background: var(--mint); transform: rotate(90deg); }
+.modal h2 {
+  font-family: 'Playfair Display', serif; color: var(--forest);
+  margin-bottom: 28px; text-align: center; font-size: 1.9rem;
+}
+
+/* ── FORMS ── */
+.form-group { margin-bottom: 18px; }
+.form-group label { display: block; margin-bottom: 7px; color: var(--moss); font-weight: 500; font-size: 0.88rem; letter-spacing: 0.04em; }
+.form-group input,
+.form-group select,
+.form-group textarea {
+  width: 100%; padding: 13px 16px;
+  border: 2px solid rgba(74,140,92,0.2); border-radius: 14px;
+  font-size: 0.92rem; font-family: 'DM Sans', sans-serif;
+  background: var(--cream); color: var(--forest);
+  transition: all 0.25s;
+}
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus {
+  outline: none; border-color: var(--fern);
+  box-shadow: 0 0 0 3px rgba(74,140,92,0.12); background: var(--white);
+}
+.form-group textarea { min-height: 120px; resize: vertical; }
+.form-row { display: flex; gap: 14px; margin-bottom: 18px; }
+.form-row .form-group { flex: 1; margin-bottom: 0; }
+.checkbox-group { display: flex; align-items: center; gap: 10px; margin: 18px 0; }
+.checkbox-group input { width: auto; accent-color: var(--fern); }
+.checkbox-group label { font-size: 0.88rem; color: var(--moss); }
+
+.modal-btn {
+  width: 100%; padding: 15px;
+  background: var(--forest); color: var(--cream);
+  border: none; border-radius: 100px;
+  font-size: 0.92rem; font-weight: 600; letter-spacing: 0.05em; text-transform: uppercase;
+  cursor: pointer; transition: all 0.3s; font-family: 'DM Sans', sans-serif;
+}
+.modal-btn:hover { background: var(--fern); transform: translateY(-2px); box-shadow: 0 12px 28px rgba(74,140,92,0.3); }
+
+.modal-footer {
+  text-align: center;
+  margin-top: 18px;
+  color: var(--moss);
+  font-size: 0.88rem;
+}
+.modal-footer a { color: var(--fern); text-decoration: none; font-weight: 600; }
+.modal-footer a:hover { text-decoration: underline; }
+
+/* ── HERO ── */
+.hero {
+  background: linear-gradient(rgba(26,58,42,0.82), rgba(26,58,42,0.88)),
+    url('https://images.unsplash.com/photo-1523348837708-15d4a09cfac2?auto=format&fit=crop&w=2070&q=80') center/cover no-repeat;
+  padding: 160px 80px 100px;
+  color: var(--white);
+  text-align: center;
+  min-height: 90vh;
+  display: flex;
+  align-items: center;
+}
+.hero-content { max-width: 900px; margin: 0 auto; }
+.hero-eyebrow {
+  font-size: 0.72rem; letter-spacing: 0.2em; text-transform: uppercase;
+  color: var(--mint); font-weight: 500; margin-bottom: 22px;
+  display: flex; align-items: center; justify-content: center; gap: 10px;
+}
+.hero-eyebrow::before,
+.hero-eyebrow::after { content: ''; display: block; width: 28px; height: 1.5px; background: var(--mint); }
+.hero h2 {
+  font-family: 'Playfair Display', serif;
+  font-size: clamp(2.6rem, 5vw, 4.2rem);
+  line-height: 1.1; margin-bottom: 22px; color: var(--white);
+}
+.hero h2 em { font-style: italic; color: var(--mint); }
+.hero p { font-size: 1.1rem; margin-bottom: 44px; opacity: 0.85; font-weight: 300; line-height: 1.7; max-width: 620px; margin-left: auto; margin-right: auto; }
+
+.btn {
+  padding: 15px 36px;
+  background: var(--fern); color: var(--cream);
+  border: 2px solid var(--fern); border-radius: 100px;
+  font-size: 0.9rem; font-weight: 500; letter-spacing: 0.05em; text-transform: uppercase;
+  cursor: pointer; display: inline-flex; align-items: center; gap: 10px;
+  transition: all 0.3s; font-family: 'DM Sans', sans-serif;
+}
+.btn:hover { background: var(--forest); border-color: var(--forest); transform: translateY(-2px); box-shadow: 0 12px 28px rgba(26,58,42,0.3); }
+.btn-outline {
+  background: transparent; border: 2px solid var(--mint); color: var(--mint);
+  border-radius: 100px; padding: 15px 36px; font-size: 0.9rem; font-weight: 500;
+  letter-spacing: 0.05em; text-transform: uppercase; cursor: pointer;
+  display: inline-flex; align-items: center; gap: 10px; transition: all 0.3s;
+  font-family: 'DM Sans', sans-serif;
+}
+.btn-outline:hover { background: var(--mint); color: var(--forest); }
+
+/* ── SECTIONS ── */
+section.page-section {
+  padding: 100px 80px;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+.full-bleed {
+  padding: 0;
+  max-width: none;
+  margin: 0;
+}
+.full-bleed .inner {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 100px 80px;
+}
+section.page-section.bg-parchment {
+  background: var(--parchment); max-width: none;
+  padding-left: 80px; padding-right: 80px;
+}
+section.page-section.bg-parchment > * { max-width: 1400px; margin-left: auto; margin-right: auto; }
+section.page-section.bg-parchment .subtitle { margin-left: auto; margin-right: auto; }
+
+.section-label {
+  font-size: 0.72rem; letter-spacing: 0.2em; text-transform: uppercase;
+  color: var(--fern); font-weight: 500; margin-bottom: 14px;
+  display: flex; align-items: center; gap: 10px;
+}
+.section-label::before { content: ''; display: block; width: 24px; height: 1.5px; background: var(--fern); }
+.section-label.centered { justify-content: center; }
+.section-label.centered::after { content: ''; display: block; width: 24px; height: 1.5px; background: var(--fern); }
+
+.section-title {
+  font-family: 'Playfair Display', serif;
+  font-size: clamp(2rem, 3.5vw, 3rem); line-height: 1.2;
+  color: var(--forest); margin-bottom: 14px;
+}
+.section-title.centered { text-align: center; }
+.section-title em { font-style: italic; color: var(--fern); }
+
+.subtitle {
+  text-align: center; color: var(--moss); margin-bottom: 60px;
+  font-size: 1rem; line-height: 1.7; font-weight: 300; max-width: 560px; margin-left: auto; margin-right: auto;
+}
+
+/* ── COUNTERS ── */
+.counters {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 24px; text-align: center;
+}
+.counter {
+  background: var(--white); padding: 50px 30px; border-radius: 24px;
+  border: 1px solid rgba(74,140,92,0.1);
+  cursor: pointer; transition: all 0.35s;
+}
+.counter:hover { transform: translateY(-6px); box-shadow: 0 24px 56px rgba(26,58,42,0.12); border-color: var(--sage); }
+.counter i { font-size: 2.4rem; color: var(--fern); margin-bottom: 18px; display: block; }
+.counter h3 { font-family: 'Playfair Display', serif; font-size: 3.2rem; color: var(--forest); margin-bottom: 8px; }
+.counter p { font-size: 0.85rem; color: var(--moss); letter-spacing: 0.04em; font-weight: 300; }
+
+/* ── DETECTION ── */
+.detect-box {
+  background: var(--white); padding: 50px; border-radius: 28px;
+  border: 1px solid rgba(74,140,92,0.1);
+  box-shadow: 0 16px 48px rgba(26,58,42,0.08);
+}
+.upload-area {
+  padding: 60px 30px; border: 2.5px dashed rgba(74,140,92,0.35);
+  border-radius: 20px; text-align: center; cursor: pointer;
+  background: var(--cream); margin-bottom: 28px; transition: all 0.3s;
+}
+.upload-area:hover { border-color: var(--fern); background: var(--mint); background: rgba(178,216,196,0.18); }
+.upload-area i { font-size: 3rem; color: var(--fern); margin-bottom: 14px; display: block; }
+.upload-area p { color: var(--moss); font-size: 0.9rem; font-weight: 300; }
+
+.preview {
+  width: 100%; max-height: 350px; object-fit: contain;
+  border-radius: 18px; display: none; margin-bottom: 20px;
+  border: 1px solid rgba(74,140,92,0.15);
+}
+
+.result {
+  display: none; margin-top: 28px; padding: 28px;
+  background: rgba(178,216,196,0.18); border-radius: 18px;
+  border-left: 4px solid var(--fern);
+}
+.result h3 { font-family: 'Playfair Display', serif; color: var(--forest); font-size: 1.4rem; margin-bottom: 12px; }
+.result h4 { color: var(--moss); font-size: 0.88rem; letter-spacing: 0.06em; text-transform: uppercase; margin-bottom: 10px; }
+.result ul { list-style: none; }
+.result ul li { color: var(--moss); font-size: 0.9rem; padding: 6px 0; border-bottom: 1px solid rgba(74,140,92,0.1); font-weight: 300; }
+.result ul li::before { content: '→ '; color: var(--fern); }
+
+.progress { background: rgba(74,140,92,0.15); border-radius: 20px; height: 10px; margin: 10px 0; }
+.progress span { display: block; height: 100%; background: var(--fern); border-radius: 20px; width: 0; transition: width 0.8s ease; }
+
+/* ── GALLERY ── */
+.gallery { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 24px; }
+.gallery-card {
+  background: var(--white); border-radius: 24px; overflow: hidden;
+  border: 1px solid rgba(74,140,92,0.1); cursor: pointer; transition: all 0.35s;
+}
+.gallery-card:hover { transform: translateY(-6px); box-shadow: 0 24px 56px rgba(26,58,42,0.13); }
+.gallery-card img { width: 100%; height: 240px; object-fit: cover; }
+.gallery-card div { padding: 24px; }
+.gallery-card h3 { font-family: 'Playfair Display', serif; color: var(--forest); margin-bottom: 8px; font-size: 1.1rem; }
+.gallery-card p { color: var(--moss); font-size: 0.88rem; font-weight: 300; line-height: 1.6; }
+
+/* ── MISSION ── */
+.mission { background: var(--white); padding: 56px; border-radius: 28px; border: 1px solid rgba(74,140,92,0.1); }
+.mission-content { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 28px; }
+.mission-item {
+  padding: 32px 28px; background: var(--cream); border-radius: 20px; text-align: center;
+  cursor: pointer; transition: all 0.35s; border: 2px solid transparent;
+}
+.mission-item:hover { transform: translateY(-5px); border-color: var(--sage); box-shadow: 0 16px 36px rgba(74,140,92,0.12); }
+.mission-item i { font-size: 2.2rem; color: var(--fern); margin-bottom: 16px; display: block; }
+.mission-item h3 { font-family: 'Playfair Display', serif; color: var(--forest); margin-bottom: 12px; font-size: 1.1rem; }
+.mission-item p { color: var(--moss); font-size: 0.88rem; line-height: 1.6; font-weight: 300; }
+
+/* ── CONTACT ── */
+.contact-wrapper { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; margin-top: 48px; }
+.contact-info, .contact-form {
+  background: var(--white); padding: 40px; border-radius: 24px;
+  border: 1px solid rgba(74,140,92,0.1);
+}
+.contact-info h3, .contact-form h3 {
+  font-family: 'Playfair Display', serif; color: var(--forest);
+  margin-bottom: 28px; font-size: 1.5rem;
+}
+.contact-item { display: flex; gap: 18px; margin-bottom: 22px; align-items: flex-start; }
+.contact-item i { font-size: 20px; color: var(--fern); width: 36px; margin-top: 2px; }
+.contact-item h4 { color: var(--forest); margin-bottom: 4px; font-size: 0.9rem; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; }
+.contact-item p { color: var(--moss); font-size: 0.85rem; font-weight: 300; }
+
+.map-container { margin-top: 44px; border-radius: 20px; overflow: hidden; height: 380px; border: 1px solid rgba(74,140,92,0.1); }
+.map-container iframe { width: 100%; height: 100%; border: none; }
+
+/* ── FOOTER ── */
+footer {
+  background: var(--forest); color: var(--mint);
+  padding: 70px 80px 40px;
+}
+.footer-top {
+  display: grid; grid-template-columns: 2fr 1fr 1fr 1fr;
+  gap: 56px; margin-bottom: 56px;
+}
+.footer-logo { font-family: 'Playfair Display', serif; font-size: 1.6rem; color: var(--cream); display: block; margin-bottom: 14px; }
+.footer-desc { font-size: 0.84rem; line-height: 1.7; opacity: 0.6; font-weight: 300; }
+.footer-section h3 {
+  font-family: 'Playfair Display', serif; color: var(--cream);
+  margin-bottom: 18px; font-size: 1rem;
+}
+.footer-section a {
+  color: var(--mint); text-decoration: none; display: block;
+  margin-bottom: 10px; cursor: pointer; transition: all 0.25s;
+  font-size: 0.83rem; opacity: 0.65;
+}
+.footer-section a:hover { opacity: 1; padding-left: 4px; }
+.footer-section p { font-size: 0.83rem; opacity: 0.65; line-height: 1.6; font-weight: 300; }
+
+.footer-bottom {
+  border-top: 1px solid rgba(178,216,196,0.1); padding-top: 28px;
+  display: flex; justify-content: space-between; align-items: center;
+}
+.copyright { font-size: 0.77rem; opacity: 0.4; }
+.footer-social { display: flex; gap: 10px; }
+.social-btn {
+  width: 36px; height: 36px; border-radius: 50%;
+  background: rgba(255,255,255,0.06); border: 1px solid rgba(178,216,196,0.13);
+  display: flex; align-items: center; justify-content: center; font-size: 0.85rem;
+  text-decoration: none; cursor: pointer; transition: all 0.25s; color: var(--mint);
+}
+.social-btn:hover { background: var(--fern); border-color: var(--fern); }
+
+/* ── NOTIFICATION ── */
+.notification {
+  position: fixed; top: 88px; right: 24px;
+  padding: 14px 22px; border-radius: 100px; color: var(--cream); z-index: 3000;
+  animation: slideIn 0.3s ease; display: flex; align-items: center; gap: 10px;
+  box-shadow: 0 10px 28px rgba(26,58,42,0.25); font-size: 0.88rem; font-weight: 500;
+  font-family: 'DM Sans', sans-serif; letter-spacing: 0.03em;
+}
+@keyframes slideIn { from { transform: translateX(110%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+.notification.success { background: var(--fern); }
+.notification.error { background: #c0392b; }
+.notification.info { background: var(--moss); }
+
+/* ── RESPONSIVE ── */
+@media (max-width: 1024px) {
+  nav.site-nav { padding: 18px 28px; }
+  .hero { padding: 120px 28px 80px; }
+  section.page-section { padding: 70px 28px; }
+  section.page-section.bg-parchment { padding-left: 28px; padding-right: 28px; }
+  .contact-wrapper { grid-template-columns: 1fr; }
+  .footer-top { grid-template-columns: 1fr 1fr; gap: 40px; }
+  footer { padding: 60px 28px 32px; }
+}
+
+@media (max-width: 768px) {
+  .hero { padding: 100px 20px 60px; }
+  .hero h2 { font-size: 2rem; }
+  section.page-section { padding: 60px 20px; }
+  .modal-content { padding: 30px 22px; }
+  .mission { padding: 32px 20px; }
+  .footer-top { grid-template-columns: 1fr; }
+  .footer-bottom { flex-direction: column; gap: 16px; }
+  nav.site-nav { padding: 16px 20px; flex-wrap: wrap; gap: 12px; }
+  .nav-links { gap: 14px; }
+  .detect-box { padding: 28px 20px; }
+}
+
+</style>
+</head>
+<body>
+
+<!-- ==================== NAV (matches Verdana purchase.html) ==================== -->
+<nav class="site-nav">
+  <a class="nav-logo" href="purchase.html">Ver<span>dana</span></a>
+  <ul class="nav-links">
+    <li><a onclick="checkLoginAndNavigate('#home')">Home</a></li>
+    <li><a onclick="checkLoginAndNavigate('#stats')">Stats</a></li>
+    <li><a onclick="checkLoginAndNavigate('#detect')">Detection</a></li>
+    <li><a onclick="checkLoginAndNavigate('#gallery')">Gallery</a></li>
+    <li><a href="purchase.html">🛒 Shop Plants</a></li>
+    <li><a onclick="checkLoginAndNavigate('#contact')">Contact</a></li>
+    <!-- AUTH BUTTONS -->
+    <li>
+      <div class="auth-buttons" id="authButtons">
+        <button class="auth-btn login" onclick="showLoginModal()">Login</button>
+        <button class="auth-btn signup" onclick="showSignupModal()">Sign Up</button>
+      </div>
+      <div class="user-menu" id="userMenu">
+        <div class="user-avatar" id="userAvatar">U</div>
+        <span class="user-name" id="userName">User</span>
+        <a href="profile.html" style="color:var(--moss);font-size:0.82rem;font-weight:500;text-decoration:none;letter-spacing:0.05em;text-transform:uppercase;transition:color 0.2s;" onmouseover="this.style.color='var(--fern)'" onmouseout="this.style.color='var(--moss)'">Profile</a>
+        <button class="logout-btn" onclick="logout()">Logout</button>
+      </div>
+    </li>
+  </ul>
+</nav>
+
+<!-- ==================== MODALS ==================== -->
+
+<!-- Login Modal -->
+<div id="loginModal" class="modal">
+  <div class="modal-content">
+    <span class="close-modal" onclick="closeModal('loginModal')">&times;</span>
+    <h2><i class="fas fa-sign-in-alt" style="color: #2ecc71;"></i> Login Required</h2>
+    <p style="text-align: center; margin-bottom: 25px; color: #666;">Please login to continue using this feature</p>
+    <form onsubmit="handleLogin(event)">
+      <div class="form-group">
+        <label>Email Address</label>
+        <input type="email" id="loginEmail" placeholder="Enter your email" required>
+      </div>
+      <div class="form-group">
+        <label>Password</label>
+        <input type="password" id="loginPassword" placeholder="Enter your password" required>
+      </div>
+      <div class="checkbox-group">
+        <input type="checkbox" id="rememberMe">
+        <label for="rememberMe">Remember me</label>
+      </div>
+      <div style="text-align: right; margin-bottom: 20px;">
+        <a href="#" onclick="openModal('forgotModal'); closeModal('loginModal')" style="color: #2ecc71;">Forgot Password?</a>
+      </div>
+      <button type="submit" class="modal-btn">Login Now</button>
+      <div class="modal-footer">
+        <p>Don't have an account? <a href="#" onclick="showSignupModal(); closeModal('loginModal')">Create Account</a></p>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Signup Modal -->
+<div id="signupModal" class="modal">
+  <div class="modal-content">
+    <span class="close-modal" onclick="closeModal('signupModal')">&times;</span>
+    <h2><i class="fas fa-user-plus" style="color: #2ecc71;"></i> Create Account</h2>
+    <p style="text-align: center; margin-bottom: 25px; color: #666;">Sign up to access all features</p>
+    <form onsubmit="handleSignup(event)">
+      <div class="form-row">
+        <div class="form-group">
+          <label>First Name</label>
+          <input type="text" id="firstName" placeholder="First name" required>
+        </div>
+        <div class="form-group">
+          <label>Last Name</label>
+          <input type="text" id="lastName" placeholder="Last name" required>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Email Address</label>
+        <input type="email" id="signupEmail" placeholder="Enter your email" required>
+      </div>
+      <div class="form-group">
+        <label>Phone Number</label>
+        <input type="tel" id="phone" placeholder="Enter your phone number">
+      </div>
+      <div class="form-group">
+        <label>User Type</label>
+        <select id="userType">
+          <option value="farmer">🌾 Farmer</option>
+          <option value="gardener">🌱 Gardener</option>
+          <option value="student">📚 Student</option>
+          <option value="researcher">🔬 Researcher</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Password</label>
+        <input type="password" id="signupPassword" placeholder="Create password" required>
+      </div>
+      <div class="form-group">
+        <label>Confirm Password</label>
+        <input type="password" id="confirmPassword" placeholder="Confirm password" required>
+      </div>
+      <div class="checkbox-group">
+        <input type="checkbox" id="terms" required>
+        <label for="terms">I agree to the Terms & Conditions</label>
+      </div>
+      <button type="submit" class="modal-btn">Create Account</button>
+      <div class="modal-footer">
+        <p>Already have an account? <a href="#" onclick="showLoginModal(); closeModal('signupModal')">Login Here</a></p>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Forgot Password Modal -->
+<div id="forgotModal" class="modal">
+  <div class="modal-content">
+    <span class="close-modal" onclick="closeModal('forgotModal')">&times;</span>
+    <h2>Reset Password</h2>
+    <p style="margin-bottom: 25px; color: #666;">Enter your email address and we'll send you a link to reset your password.</p>
+    <form onsubmit="handleForgotPassword(event)">
+      <div class="form-group">
+        <label>Email Address</label>
+        <input type="email" id="resetEmail" placeholder="Enter your email" required>
+      </div>
+      <button type="submit" class="modal-btn">Send Reset Link</button>
+      <div class="modal-footer">
+        <p><a href="#" onclick="showLoginModal(); closeModal('forgotModal')">Back to Login</a></p>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ==================== HOME / HERO SECTION ==================== -->
+<section id="home" class="hero" style="padding-top:100px;">
+  <div class="hero-content">
+    <div class="hero-eyebrow">AI-Powered Plant Health</div>
+    <h2>Smart Plant <em>Disease</em> Detection Using AI</h2>
+    <p>Early disease detection for smarter and sustainable farming. Our AI-powered platform helps farmers identify crop diseases quickly and accurately.</p>
+    <div style="display: flex; gap: 16px; justify-content: center; flex-wrap: wrap;">
+      <button class="btn" onclick="checkLoginAndNavigate('#detect')">
+        <i class="fas fa-search"></i> Detect Disease
+      </button>
+      <button class="btn-outline" onclick="checkLoginAndNavigate('#contact')">
+        <i class="fas fa-envelope"></i> Contact Us
+      </button>
+    </div>
+  </div>
+</section>
+
+<!-- ==================== STATS SECTION ==================== -->
+<section id="stats" class="page-section bg-parchment">
+  <div class="section-label centered">Platform Impact</div>
+  <div class="section-title centered">Real-Time <em>Performance</em></div>
+  <p class="subtitle">Live performance indicators based on our AI detection system</p>
+  <div class="counters">
+    <div class="counter" onclick="checkLoginAndViewStats()">
+      <i class="fas fa-bullseye"></i>
+      <h3 data-count="95">0</h3>
+      <p>Detection Accuracy (%)</p>
+    </div>
+    <div class="counter" onclick="checkLoginAndViewStats()">
+      <i class="fas fa-users"></i>
+      <h3 data-count="1250">0</h3>
+      <p>Farmers Benefited</p>
+    </div>
+    <div class="counter" onclick="checkLoginAndViewStats()">
+      <i class="fas fa-leaf"></i>
+      <h3 data-count="62">0</h3>
+      <p>Diseases Covered</p>
+    </div>
+  </div>
+</section>
+
+<!-- ==================== DETECTION SECTION ==================== -->
+<section id="detect" class="page-section">
+  <div class="section-label">AI Analysis</div>
+  <div class="section-title">AI Disease <em>Detection</em></div>
+  <p class="subtitle">Upload an image of your plant leaf for instant AI analysis</p>
+  <div class="detect-box">
+    <div class="upload-area" onclick="checkLoginAndUpload()">
+      <i class="fas fa-cloud-upload-alt"></i>
+      <p>Click to upload or drag and drop</p>
+      <p>JPG, PNG or WebP (Max. 5MB)</p>
+      <p style="color: var(--fern); margin-top: 10px; font-size:0.85rem;">
+        <i class="fas fa-lock"></i> Login to upload images
+      </p>
+    </div>
+    <input type="file" id="fileInput" accept="image/*" onchange="previewImage(event)" style="display: none;">
+    
+    <img id="preview" class="preview" />
+    
+    <div class="form-group">
+      <label>Select Plant Type</label>
+      <select id="cropType" disabled style="background: #f5f5f5; cursor: not-allowed;">
+        <option value="">Login to select plant type</option>
+        <option value="Neem">Neem</option>
+        <option value="Rose">Rose</option>
+        <option value="Tulsi">Tulsi</option>
+        <option value="Hibiscus">Hibiscus</option>
+        <option value="Marigold">Marigold</option>
+        <option value="Mango">Mango</option>
+      </select>
+    </div>
+    
+    <button class="btn" onclick="checkLoginAndAnalyze()" id="analyzeBtn" style="width: 100%;" disabled>
+      <i class="fas fa-microscope"></i> Analyze with AI (Login Required)
+    </button>
+    
+    <div class="result" id="result">
+      <h3 id="diseaseName">Leaf Blight</h3>
+      <div class="progress">
+        <span id="confidenceBar"></span>
+      </div>
+      <p id="confidenceValue" style="text-align: right; margin-bottom: 15px; color: var(--moss); font-size:0.88rem; font-weight:500;">92%</p>
+      
+      <div class="recommendation">
+        <h4><i class="fas fa-lightbulb"></i> Recommendations</h4>
+        <ul id="recommendationsList">
+          <li>Improve field drainage to reduce moisture</li>
+          <li>Apply copper-based fungicide every 7-10 days</li>
+        </ul>
+      </div>
+      
+      <button class="btn" style="width: 100%; margin-top: 20px;" onclick="checkLoginAndSave()" id="saveBtn">
+        <i class="fas fa-save"></i> Save Detection (Login Required)
+      </button>
+    </div>
+  </div>
+</section>
+
+<!-- ==================== GALLERY SECTION ==================== -->
+<section id="gallery" class="page-section bg-parchment">
+  <div class="section-label centered">Impact Stories</div>
+  <div class="section-title centered">Smart Farming <em>Impact</em></div>
+  <p class="subtitle" style="margin-bottom:40px;">See how AI-powered detection is transforming farming across India</p>
+  <div class="gallery">
+    <div class="gallery-card" onclick="checkLoginAndViewGallery()">
+      <img src="https://images.unsplash.com/photo-1501004318641-b39e6451bec6?auto=format&fit=crop&w=800&q=80" alt="Healthy Crops">
+      <div>
+        <h3>Healthy Crops</h3>
+        <p>Early detection leads to healthier plants and higher yields.</p>
+      </div>
+    </div>
+    <div class="gallery-card" onclick="checkLoginAndViewGallery()">
+      <img src="https://images.unsplash.com/photo-1586773860418-d37222d8fce3?auto=format&fit=crop&w=800&q=80" alt="AI Agriculture">
+      <div>
+        <h3>AI Agriculture</h3>
+        <p>Advanced machine learning algorithms analyze plant health data.</p>
+      </div>
+    </div>
+    <div class="gallery-card" onclick="checkLoginAndViewGallery()">
+      <img src="https://images.unsplash.com/photo-1605000797499-95a51c5269ae?auto=format&fit=crop&w=800&q=80" alt="Empowered Farmers">
+      <div>
+        <h3>Empowered Farmers</h3>
+        <p>40% higher yields and 60% reduction in pesticide use.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ==================== MISSION SECTION ==================== -->
+<section id="mission" class="page-section">
+  <div class="section-label centered">Who We Are</div>
+  <div class="section-title centered">Our Vision <em>&amp; Mission</em></div>
+  <p class="subtitle">Driven by purpose, built for farmers</p>
+  <div class="mission">
+    <div class="mission-content">
+      <div class="mission-item" onclick="checkLoginAndViewMission()">
+        <i class="fas fa-eye"></i>
+        <h3>Vision</h3>
+        <p>To make AI-driven agricultural technology accessible to every farmer in India.</p>
+      </div>
+      <div class="mission-item" onclick="checkLoginAndViewMission()">
+        <i class="fas fa-bullseye"></i>
+        <h3>Mission</h3>
+        <p>Develop cutting-edge AI solutions for early disease detection.</p>
+      </div>
+      <div class="mission-item" onclick="checkLoginAndViewMission()">
+        <i class="fas fa-handshake"></i>
+        <h3>Commitment</h3>
+        <p>Creating user-friendly, affordable technology for Indian farmers.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ==================== CONTACT SECTION ==================== -->
+<section id="contact" class="page-section bg-parchment">
+  <div class="section-label centered">Reach Out</div>
+  <div class="section-title centered">Contact <em>Us</em></div>
+  <p class="subtitle">Get in touch with us for any questions or support</p>
+  
+  <div class="contact-wrapper">
+    <div class="contact-info">
+      <h3>Our Contact Information</h3>
+      <div class="contact-item">
+        <i class="fas fa-map-marker-alt"></i>
+        <div>
+          <h4>Headquarters</h4>
+          <p>AgriTech Park, Electronic City</p>
+          <p>Bangalore, Karnataka 560100</p>
+          <p>India</p>
+        </div>
+      </div>
+      <div class="contact-item">
+        <i class="fas fa-phone"></i>
+        <div>
+          <h4>Phone Numbers</h4>
+          <p>Main: +91 80 1234 5678</p>
+          <p>Support: +91 98765 43210</p>
+        </div>
+      </div>
+      <div class="contact-item">
+        <i class="fas fa-envelope"></i>
+        <div>
+          <h4>Email Addresses</h4>
+          <p>info@aiplantdetector.in</p>
+          <p>support@aiplantdetector.in</p>
+        </div>
+      </div>
+      <div class="contact-item">
+        <i class="fas fa-clock"></i>
+        <div>
+          <h4>Business Hours</h4>
+          <p>Mon-Sat: 9:00 AM - 6:00 PM IST</p>
+          <p>Sunday: Closed</p>
+        </div>
+      </div>
+    </div>
+    
+    <div class="contact-form">
+      <h3>Send us a Message</h3>
+      <form onsubmit="checkLoginAndSubmitContact(event)">
+        <div class="form-group">
+          <input type="text" id="contactName2" placeholder="Your Name" required>
+        </div>
+        <div class="form-group">
+          <input type="email" id="contactEmail2" placeholder="Your Email" required>
+        </div>
+        <div class="form-group">
+          <input type="text" id="contactSubject2" placeholder="Subject" required>
+        </div>
+        <div class="form-group">
+          <textarea id="contactMessage2" placeholder="Your Message" rows="5" required></textarea>
+        </div>
+        <button type="submit" class="modal-btn">Send Message</button>
+      </form>
+      <p style="margin-top: 14px; text-align: center; font-size: 0.8rem; color: var(--sage); letter-spacing:0.04em;">
+        <i class="fas fa-lock"></i> Login required to send messages
+      </p>
+    </div>
+  </div>
+  
+  <div class="map-container">
+    <iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d15552.23389056433!2d77.594562!3d12.971599!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3bae1670c9b44e6d%3A0xf8dfc3e8517e4fe0!2sBengaluru%2C%20Karnataka!5e0!3m2!1sen!2sin!4v1623456789012!5m2!1sen!2sin" allowfullscreen></iframe>
+  </div>
+</section>
+
+<!-- ==================== FOOTER ==================== -->
+<footer>
+  <div class="footer-top">
+    <div>
+      <span class="footer-logo">Ver<span style="color:var(--sage);font-style:italic">dana</span></span>
+      <p class="footer-desc">Revolutionizing Indian agriculture through artificial intelligence. Smart disease detection for healthier plants and better harvests.</p>
+    </div>
+    <div class="footer-section">
+      <h3>Quick Links</h3>
+      <a onclick="checkLoginAndNavigate('#home')">Home</a>
+      <a onclick="checkLoginAndNavigate('#detect')">Disease Detection</a>
+      <a onclick="checkLoginAndNavigate('#gallery')">Gallery</a>
+      <a onclick="checkLoginAndNavigate('#contact')">Contact</a>
+    </div>
+    <div class="footer-section">
+      <h3>Account</h3>
+      <a onclick="showLoginModal()">Login</a>
+      <a onclick="showSignupModal()">Sign Up</a>
+    </div>
+    <div class="footer-section">
+      <h3>Also Visit</h3>
+      <a href="purchase.html">🛒 Shop Plants</a>
+      <a href="purchase.html#tips">Care Tips</a>
+      <a href="purchase.html#categories">Browse Plants</a>
+    </div>
+  </div>
+  <div class="footer-bottom">
+    <span class="copyright">© 2026 Verdana — AI Plant Disease Detector. Made in India 🇮🇳</span>
+    <div class="footer-social">
+      <a class="social-btn" href="#" title="Instagram"><i class="fab fa-instagram"></i></a>
+      <a class="social-btn" href="#" title="Twitter"><i class="fab fa-twitter"></i></a>
+      <a class="social-btn" href="#" title="YouTube"><i class="fab fa-youtube"></i></a>
+    </div>
+  </div>
+</footer>
+
+<!-- ==================== JAVASCRIPT ==================== -->
+<script>
+// ==================== CONFIG ====================
+const API = '';   // same origin — change to 'http://localhost:5000' if serving separately
+
+// ==================== GLOBAL STATE ====================
+let currentUser  = null;
+let isLoggedIn   = false;
+let pendingFeature = null;
+let authToken    = localStorage.getItem('verdana_token') || '';
+
+// ─── Fetch wrapper (attaches JWT) ──────────────────
+async function api(path, opts = {}) {
+  const headers = { 'Content-Type': 'application/json', ...(opts.headers || {}) };
+  if (authToken) headers['Authorization'] = `Bearer ${authToken}`;
+  const res = await fetch(API + path, { ...opts, headers, credentials: 'include' });
+  return res;
+}
+
+// ─── Boot ──────────────────────────────────────────
+window.addEventListener('DOMContentLoaded', async function() {
+  if (authToken) {
+    try {
+      const res = await api('/api/auth/me');
+      if (res.ok) {
+        const data = await res.json();
+        currentUser = data;
+        isLoggedIn  = true;
+        updateUserMenu();
+        enableFeatures();
+        await loadDetectionHistory();
+      } else {
+        // Token expired
+        authToken = '';
+        localStorage.removeItem('verdana_token');
+      }
+    } catch(e) { /* backend not running — fall through */ }
+  }
+  startCounterAnimation();
+});
+
+// ==================== LOGIN CHECK FUNCTIONS ====================
+function checkLoginAndNavigate(sectionId) {
+  if (!isLoggedIn) {
+    pendingFeature = () => {
+      document.querySelector(sectionId).scrollIntoView({ behavior: 'smooth' });
+      showNotification('Welcome! You can now access this feature.', 'success');
+    };
+    showLoginModal();
+    return false;
+  }
+  document.querySelector(sectionId).scrollIntoView({ behavior: 'smooth' });
+  return true;
+}
+
+function checkLoginAndUpload() {
+  if (!isLoggedIn) {
+    pendingFeature = () => {
+      document.getElementById('fileInput').click();
+      showNotification('You can now upload images!', 'success');
+    };
+    showLoginModal();
+    return false;
+  }
+  document.getElementById('fileInput').click();
+  return true;
+}
+
+function checkLoginAndAnalyze() {
+  if (!isLoggedIn) {
+    pendingFeature = () => {
+      analyzeImage();
+      showNotification('AI analysis is now available!', 'success');
+    };
+    showLoginModal();
+    return false;
+  }
+  analyzeImage();
+  return true;
+}
+
+function checkLoginAndSave() {
+  if (!isLoggedIn) {
+    pendingFeature = () => {
+      saveDetection();
+      showNotification('You can now save results!', 'success');
+    };
+    showLoginModal();
+    return false;
+  }
+  saveDetection();
+  return true;
+}
+
+function checkLoginAndViewStats() {
+  if (!isLoggedIn) {
+    pendingFeature = () => {
+      showNotification('You can now view detailed statistics!', 'success');
+    };
+    showLoginModal();
+    return false;
+  }
+  showNotification('Loading detailed statistics...', 'info');
+  return true;
+}
+
+function checkLoginAndViewGallery() {
+  if (!isLoggedIn) {
+    pendingFeature = () => {
+      showNotification('You can now view gallery images!', 'success');
+    };
+    showLoginModal();
+    return false;
+  }
+  showNotification('Opening gallery...', 'info');
+  return true;
+}
+
+function checkLoginAndViewMission() {
+  if (!isLoggedIn) {
+    pendingFeature = () => {
+      showNotification('You can now view mission details!', 'success');
+    };
+    showLoginModal();
+    return false;
+  }
+  showNotification('Viewing mission details...', 'info');
+  return true;
+}
+
+function checkLoginAndSubmitContact(event) {
+  event.preventDefault();
+  if (!isLoggedIn) {
+    pendingFeature = () => {
+      submitContactForm(event);
+      showNotification('Your message has been sent!', 'success');
+    };
+    showLoginModal();
+    return false;
+  }
+  submitContactForm(event);
+  return true;
+}
+
+// ==================== MODAL FUNCTIONS ====================
+function showLoginModal() {
+  openModal('loginModal');
+}
+
+function showSignupModal() {
+  openModal('signupModal');
+}
+
+function openModal(modalId) {
+  document.getElementById(modalId).style.display = 'flex';
+}
+
+function closeModal(modalId) {
+  document.getElementById(modalId).style.display = 'none';
+}
+
+// Close modal when clicking outside
+window.onclick = function(event) {
+  if (event.target.classList.contains('modal')) {
+    event.target.style.display = 'none';
+  }
+}
+
+// ==================== AUTH FUNCTIONS ====================
+async function handleLogin(event) {
+  event.preventDefault();
+  const email    = document.getElementById('loginEmail').value;
+  const password = document.getElementById('loginPassword').value;
+  const remember = document.getElementById('rememberMe').checked;
+  const btn      = event.target.querySelector('button[type="submit"]');
+  btn.textContent = 'Logging in…'; btn.disabled = true;
+  try {
+    const res  = await api('/api/auth/login', { method: 'POST', body: JSON.stringify({ email, password }) });
+    const data = await res.json();
+    if (!res.ok) { showNotification(data.error || 'Login failed', 'error'); btn.textContent='Login Now'; btn.disabled=false; return; }
+    authToken = data.token; currentUser = data.user; isLoggedIn = true;
+    if (remember) localStorage.setItem('verdana_token', authToken);
+    updateUserMenu(); enableFeatures(); closeModal('loginModal');
+    showNotification('Welcome back, ' + data.user.firstName + '! 🌿', 'success');
+    await loadDetectionHistory();
+    if (pendingFeature) { setTimeout(() => { pendingFeature(); pendingFeature = null; }, 400); }
+    document.getElementById('loginEmail').value = '';
+    document.getElementById('loginPassword').value = '';
+  } catch(e) { showNotification('Backend unreachable — is the server running?', 'error'); }
+  btn.textContent = 'Login Now'; btn.disabled = false;
+}
+
+async function handleSignup(event) {
+  event.preventDefault();
+  const firstName = document.getElementById('firstName').value;
+  const lastName  = document.getElementById('lastName').value;
+  const email     = document.getElementById('signupEmail').value;
+  const phone     = document.getElementById('phone').value;
+  const userType  = document.getElementById('userType').value;
+  const password  = document.getElementById('signupPassword').value;
+  const confirm   = document.getElementById('confirmPassword').value;
+  const btn       = event.target.querySelector('button[type="submit"]');
+  if (password !== confirm) { showNotification('Passwords do not match!', 'error'); return; }
+  btn.textContent = 'Creating…'; btn.disabled = true;
+  try {
+    const res  = await api('/api/auth/signup', { method: 'POST', body: JSON.stringify({ firstName, lastName, email, phone, userType, password }) });
+    const data = await res.json();
+    if (!res.ok) { showNotification(data.error || 'Signup failed', 'error'); btn.textContent='Create Account'; btn.disabled=false; return; }
+    authToken = data.token; currentUser = data.user; isLoggedIn = true;
+    localStorage.setItem('verdana_token', authToken);
+    updateUserMenu(); enableFeatures(); closeModal('signupModal');
+    showNotification('Welcome to Verdana, ' + data.user.firstName + '! 🌿', 'success');
+    if (pendingFeature) { setTimeout(() => { pendingFeature(); pendingFeature = null; }, 400); }
+  } catch(e) { showNotification('Backend unreachable — is the server running?', 'error'); }
+  btn.textContent = 'Create Account'; btn.disabled = false;
+}
+
+async function logout() {
+  try { await api('/api/auth/logout', { method: 'POST' }); } catch(e) {}
+  authToken = ''; currentUser = null; isLoggedIn = false;
+  localStorage.removeItem('verdana_token');
+  updateUserMenu(); disableFeatures(); clearDetectionHistory();
+  showNotification('Logged out successfully', 'success');
+}
+
+function updateUserMenu() {
+  const authButtons = document.querySelector('.auth-buttons');
+  const userMenu    = document.getElementById('userMenu');
+  const userAvatar  = document.getElementById('userAvatar');
+  const userName    = document.getElementById('userName');
+  if (isLoggedIn && currentUser) {
+    authButtons.style.display = 'none';
+    userMenu.style.display    = 'flex';
+    userAvatar.textContent    = currentUser.avatar || (currentUser.firstName || '?')[0].toUpperCase();
+    userName.textContent      = currentUser.firstName || currentUser.name || 'User';
+  } else {
+    authButtons.style.display = 'flex';
+    userMenu.style.display    = 'none';
+  }
+}
+
+async function handleForgotPassword(event) {
+  event.preventDefault();
+  const email = document.getElementById('resetEmail').value;
+  const btn   = event.target.querySelector('button[type="submit"]');
+  btn.textContent = 'Sending…'; btn.disabled = true;
+  try {
+    const res  = await api('/api/auth/forgot-password', { method: 'POST', body: JSON.stringify({ email }) });
+    const data = await res.json();
+    showNotification(data.message, 'success');
+    closeModal('forgotModal');
+  } catch(e) { showNotification('Backend unreachable.', 'error'); }
+  btn.textContent = 'Send Reset Link'; btn.disabled = false;
+}
+
+// ==================== FEATURE ENABLE/DISABLE ====================
+function enableFeatures() {
+  const fileInput = document.getElementById('fileInput');
+  if (fileInput) fileInput.disabled = false;
+  const cropType = document.getElementById('cropType');
+  if (cropType) { cropType.disabled = false; cropType.style.background='var(--cream)'; cropType.style.cursor='pointer'; }
+  const analyzeBtn = document.getElementById('analyzeBtn');
+  if (analyzeBtn) { analyzeBtn.innerHTML = '<i class="fas fa-microscope"></i> Analyze with AI'; analyzeBtn.disabled = true; }
+  const saveBtn = document.getElementById('saveBtn');
+  if (saveBtn) saveBtn.innerHTML = '<i class="fas fa-save"></i> Save Detection';
+}
+
+function disableFeatures() {
+  const fileInput = document.getElementById('fileInput');
+  if (fileInput) fileInput.disabled = true;
+  const cropType = document.getElementById('cropType');
+  if (cropType) { cropType.disabled = true; cropType.style.background='var(--parchment)'; cropType.style.cursor='not-allowed'; }
+  const analyzeBtn = document.getElementById('analyzeBtn');
+  if (analyzeBtn) { analyzeBtn.innerHTML = '<i class="fas fa-lock"></i> Login Required'; analyzeBtn.disabled = true; }
+  const saveBtn = document.getElementById('saveBtn');
+  if (saveBtn) saveBtn.innerHTML = '<i class="fas fa-lock"></i> Login Required';
+}
+
+// ==================== DETECTION FUNCTIONS ====================
+function previewImage(e) {
+  const img = document.getElementById('preview');
+  const uploadArea = document.querySelector('.upload-area');
+  
+  if (e.target.files && e.target.files[0]) {
+    const reader = new FileReader();
+    reader.onload = function(event) {
+      img.src = event.target.result;
+      img.style.display = 'block';
+      uploadArea.style.display = 'none';
+    }
+    reader.readAsDataURL(e.target.files[0]);
+    document.getElementById('analyzeBtn').disabled = false;
+  }
+}
+
+function analyzeImage() {
+  const analyzeBtn = document.getElementById('analyzeBtn');
+  const fileInput  = document.getElementById('fileInput');
+  const cropType   = document.getElementById('cropType');
+
+  if (!fileInput.files[0]) {
+    showNotification('Please upload an image first', 'error');
+    return;
+  }
+
+  analyzeBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Analyzing...';
+  analyzeBtn.disabled  = true;
+
+  // Build multipart form with the image
+  const form = new FormData();
+  form.append('image', fileInput.files[0]);
+
+  const headers = {};
+  if (authToken) headers['Authorization'] = `Bearer ${authToken}`;
+
+  fetch(API + '/api/detect/predict', {
+    method:      'POST',
+    headers,
+    body:        form,
+    credentials: 'include',
+  })
+    .then(res => res.json())
+    .then(data => {
+      if (data.error) {
+        // Model file not deployed yet — fall back to mock demo
+        if (data.error.toLowerCase().includes('model')) {
+          showNotification('⚠️ Model file not found — showing demo result', 'info');
+          _runMockAnalysis();
+          return;
+        }
+        throw new Error(data.error);
+      }
+
+      // ── Real result ──
+      document.getElementById('diseaseName').textContent   = data.disease;
+      document.getElementById('confidenceValue').textContent = data.confidence + '%';
+      document.getElementById('confidenceBar').style.width   = data.confidence + '%';
+
+      const list = document.getElementById('recommendationsList');
+      list.innerHTML = '';
+      (data.recommendations || []).forEach(r => {
+        const li = document.createElement('li');
+        li.textContent = r;
+        list.appendChild(li);
+      });
+
+      // Store for saving
+      window._lastDetection = {
+        disease:    data.disease,
+        confidence: data.confidence,
+        recs:       data.recommendations || [],
+      };
+      // Pre-select plant type if user already chose one
+      if (cropType.value) {
+        window._lastDetection.plantType = cropType.value;
+      }
+
+      document.getElementById('result').style.display = 'block';
+      analyzeBtn.innerHTML = '<i class="fas fa-microscope"></i> Analyze Image';
+      analyzeBtn.disabled  = false;
+      showNotification('Analysis complete! ✓', 'success');
+    })
+    .catch(err => {
+      analyzeBtn.innerHTML = '<i class="fas fa-microscope"></i> Analyze Image';
+      analyzeBtn.disabled  = false;
+      showNotification('Analysis failed — ' + err.message, 'error');
+    });
+}
+
+// ── Fallback demo (used when model file is missing) ──────────
+function _runMockAnalysis() {
+  const analyzeBtn = document.getElementById('analyzeBtn');
+  const diseases = [
+    { name: 'Healthy',  confidence: 95, rec: ['Plant looks healthy — keep up regular care!', 'Water consistently.'] },
+    { name: 'Powdery',  confidence: 89, rec: ['Apply neem oil every 7–10 days.', 'Improve air circulation.'] },
+    { name: 'Rust',     confidence: 87, rec: ['Remove infected leaves immediately.', 'Apply copper fungicide.'] },
+  ];
+  const random = diseases[Math.floor(Math.random() * diseases.length)];
+
+  document.getElementById('diseaseName').textContent   = random.name + ' (demo)';
+  document.getElementById('confidenceValue').textContent = random.confidence + '%';
+  document.getElementById('confidenceBar').style.width   = random.confidence + '%';
+
+  const list = document.getElementById('recommendationsList');
+  list.innerHTML = '';
+  random.rec.forEach(r => {
+    const li = document.createElement('li'); li.textContent = r; list.appendChild(li);
+  });
+
+  window._lastDetection = { disease: random.name, confidence: random.confidence, recs: random.rec };
+  document.getElementById('result').style.display = 'block';
+  analyzeBtn.innerHTML = '<i class="fas fa-microscope"></i> Analyze Image';
+  analyzeBtn.disabled  = false;
+}
+
+async function saveDetection() {
+  if (!window._lastDetection) { showNotification('Run an analysis first', 'error'); return; }
+  const btn = document.getElementById('saveBtn');
+  btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving…';
+
+  try {
+    const plantType = document.getElementById('cropType').value || 'Unknown';
+    const fileInput = document.getElementById('fileInput');
+    const form = new FormData();
+    form.append('plantType',      plantType);
+    form.append('diseaseName',    window._lastDetection.disease);
+    form.append('confidence',     window._lastDetection.confidence);
+    form.append('recommendations', JSON.stringify(window._lastDetection.recs));
+    if (fileInput.files[0]) form.append('image', fileInput.files[0]);
+
+    const headers = {};
+    if (authToken) headers['Authorization'] = `Bearer ${authToken}`;
+    const res  = await fetch(API + '/api/detect', { method: 'POST', headers, body: form, credentials: 'include' });
+    const data = await res.json();
+
+    if (!res.ok) { showNotification(data.error || 'Save failed', 'error'); }
+    else {
+      showNotification('Detection saved to your profile! 🌿', 'success');
+      await loadDetectionHistory();
+    }
+  } catch(e) { showNotification('Backend unreachable.', 'error'); }
+  btn.innerHTML = '<i class="fas fa-save"></i> Save Detection';
+}
+
+// ==================== DETECTION HISTORY ====================
+async function loadDetectionHistory() {
+  if (!isLoggedIn) return;
+  try {
+    const res  = await api('/api/detections');
+    const data = await res.json();
+    renderDetectionHistory(data.items || []);
+  } catch(e) {}
+}
+
+function renderDetectionHistory(items) {
+  let container = document.getElementById('detectionHistory');
+  if (!container) {
+    // Inject history panel below detect section
+    const detectSection = document.getElementById('detect');
+    if (!detectSection) return;
+    container = document.createElement('div');
+    container.id = 'detectionHistory';
+    container.style.cssText = 'margin-top:40px;';
+    detectSection.appendChild(container);
+  }
+  if (!items.length) { container.innerHTML = ''; return; }
+
+  container.innerHTML = `
+    <div class="section-label" style="margin-bottom:16px">Detection History</div>
+    <div style="display:grid;gap:14px;">
+      ${items.slice(0,5).map(d => `
+        <div style="background:var(--white);border-radius:18px;padding:20px 24px;display:flex;align-items:center;justify-content:space-between;border:1px solid rgba(74,140,92,0.1);flex-wrap:wrap;gap:10px;">
+          <div>
+            <div style="font-family:'Playfair Display',serif;font-size:1rem;color:var(--forest);">${d.disease_name || 'Unknown'}</div>
+            <div style="font-size:0.78rem;color:var(--moss);margin-top:3px;">${d.plant_type} · ${d.confidence}% confidence · ${d.created_at?.slice(0,10)}</div>
+          </div>
+          <button onclick="deleteDetection(${d.id})" style="background:transparent;border:1.5px solid rgba(74,140,92,0.3);color:var(--moss);padding:6px 14px;border-radius:100px;cursor:pointer;font-size:0.78rem;font-family:'DM Sans',sans-serif;transition:all 0.2s;">
+            <i class="fas fa-trash-alt"></i> Delete
+          </button>
+        </div>
+      `).join('')}
+    </div>
+    ${items.length > 5 ? `<p style="text-align:center;margin-top:12px;font-size:0.82rem;color:var(--moss);">+ ${items.length - 5} more saved detections</p>` : ''}
+  `;
+}
+
+async function deleteDetection(id) {
+  try {
+    const res = await api(`/api/detections/${id}`, { method: 'DELETE' });
+    if (res.ok) { showNotification('Detection deleted', 'success'); await loadDetectionHistory(); }
+  } catch(e) {}
+}
+
+function clearDetectionHistory() {
+  const c = document.getElementById('detectionHistory');
+  if (c) c.innerHTML = '';
+}
+
+// ==================== CONTACT ====================
+async function submitContactForm(event) {
+  if (event && event.preventDefault) event.preventDefault();
+  const name    = document.getElementById('contactName2').value;
+  const email   = document.getElementById('contactEmail2').value;
+  const subject = document.getElementById('contactSubject2').value;
+  const message = document.getElementById('contactMessage2').value;
+
+  if (!name || !email || !subject || !message) { showNotification('Please fill all fields', 'error'); return; }
+
+  try {
+    const res  = await api('/api/contact', { method: 'POST', body: JSON.stringify({ name, email, subject, message }) });
+    const data = await res.json();
+    if (!res.ok) { showNotification(data.error || 'Failed to send', 'error'); return; }
+    showNotification('Message sent! We\'ll get back to you soon. 🌿', 'success');
+    ['contactName2','contactEmail2','contactSubject2','contactMessage2'].forEach(id => document.getElementById(id).value = '');
+  } catch(e) { showNotification('Backend unreachable.', 'error'); }
+}
+
+// ==================== NEWSLETTER (purchase.html calls this too) ====================
+async function subscribeNewsletter(email) {
+  try {
+    const res  = await api('/api/newsletter/subscribe', { method: 'POST', body: JSON.stringify({ email }) });
+    const data = await res.json();
+    return { ok: res.ok, message: data.message || data.error };
+  } catch(e) { return { ok: false, message: 'Backend unreachable.' }; }
+}
+
+// ==================== UTILITY ====================
+function showNotification(message, type) {
+  const existing = document.querySelector('.notification');
+  if (existing) existing.remove();
+  const notif = document.createElement('div');
+  notif.className = `notification ${type}`;
+  const icon = { success: 'check-circle', error: 'exclamation-circle', info: 'info-circle' }[type] || 'info-circle';
+  notif.innerHTML = `<i class="fas fa-${icon}"></i> ${message}`;
+  document.body.appendChild(notif);
+  setTimeout(() => notif.remove(), 3500);
+}
+
+function startCounterAnimation() {
+  const counters = document.querySelectorAll('[data-count]');
+  counters.forEach(counter => {
+    const target = +counter.dataset.count;
+    let count = 0;
+    const interval = setInterval(() => {
+      count += Math.ceil(target / 50);
+      if (count >= target) { counter.textContent = target; clearInterval(interval); }
+      else counter.textContent = count;
+    }, 30);
+  });
+}
+</script>
+</body>
+</html>

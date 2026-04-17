@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Verdana — My Profile</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"/>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --forest: #1a3a2a; --moss: #2d5a3d; --fern: #4a8c5c;
+  --sage: #7ab592; --mint: #b2d8c4; --cream: #f5f0e8;
+  --parchment: #ede5d4; --white: #fdfcf8;
+}
+body { font-family: 'DM Sans', sans-serif; background: var(--cream); color: var(--forest); min-height: 100vh; }
+
+/* Nav */
+nav {
+  position: fixed; top: 0; width: 100%; z-index: 500;
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 20px 60px; background: rgba(245,240,232,0.92);
+  backdrop-filter: blur(14px); border-bottom: 1px solid rgba(74,140,92,0.15);
+}
+.nav-logo { font-family: 'Playfair Display', serif; font-size: 1.5rem; color: var(--forest); text-decoration: none; }
+.nav-logo span { color: var(--fern); font-style: italic; }
+.nav-back { color: var(--moss); text-decoration: none; font-size: 0.85rem; font-weight: 500; letter-spacing: 0.06em; text-transform: uppercase; transition: color 0.2s; display: flex; align-items: center; gap: 7px; }
+.nav-back:hover { color: var(--fern); }
+
+/* Layout */
+.page { padding: 110px 60px 80px; max-width: 1100px; margin: 0 auto; }
+.profile-header { display: flex; align-items: center; gap: 28px; margin-bottom: 48px; }
+.avatar-circle { width: 80px; height: 80px; border-radius: 50%; background: var(--fern); display: flex; align-items: center; justify-content: center; font-family: 'Playfair Display', serif; font-size: 2rem; color: var(--cream); flex-shrink: 0; }
+.profile-name { font-family: 'Playfair Display', serif; font-size: 2rem; color: var(--forest); }
+.profile-meta { color: var(--moss); font-size: 0.88rem; font-weight: 300; margin-top: 4px; }
+
+/* Tabs */
+.tabs { display: flex; gap: 4px; margin-bottom: 36px; border-bottom: 1.5px solid rgba(74,140,92,0.12); }
+.tab { padding: 12px 22px; cursor: pointer; font-size: 0.85rem; font-weight: 500; letter-spacing: 0.06em; text-transform: uppercase; color: var(--sage); border: none; background: none; border-bottom: 2.5px solid transparent; margin-bottom: -1.5px; transition: all 0.2s; font-family: 'DM Sans', sans-serif; }
+.tab:hover { color: var(--moss); }
+.tab.active { color: var(--forest); border-bottom-color: var(--fern); }
+
+/* Panels */
+.tab-panel { display: none; }
+.tab-panel.active { display: block; }
+
+/* Cards */
+.card { background: var(--white); border-radius: 24px; border: 1px solid rgba(74,140,92,0.1); padding: 36px 40px; margin-bottom: 24px; }
+.card h3 { font-family: 'Playfair Display', serif; font-size: 1.2rem; color: var(--forest); margin-bottom: 24px; }
+.grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+.form-group { margin-bottom: 18px; }
+.form-group label { display: block; margin-bottom: 7px; font-size: 0.8rem; color: var(--moss); font-weight: 500; letter-spacing: 0.05em; text-transform: uppercase; }
+.form-group input, .form-group select {
+  width: 100%; padding: 13px 16px; border: 2px solid rgba(74,140,92,0.18);
+  border-radius: 14px; font-family: 'DM Sans', sans-serif; font-size: 0.9rem;
+  background: var(--cream); color: var(--forest); outline: none; transition: border 0.2s;
+}
+.form-group input:focus, .form-group select:focus { border-color: var(--fern); box-shadow: 0 0 0 3px rgba(74,140,92,0.1); }
+.form-group input:disabled { opacity: 0.55; cursor: not-allowed; }
+.btn { padding: 12px 28px; border: none; border-radius: 100px; font-family: 'DM Sans', sans-serif; font-size: 0.88rem; font-weight: 500; letter-spacing: 0.05em; text-transform: uppercase; cursor: pointer; transition: all 0.25s; }
+.btn-primary { background: var(--forest); color: var(--cream); }
+.btn-primary:hover { background: var(--fern); transform: translateY(-2px); box-shadow: 0 8px 20px rgba(74,140,92,0.25); }
+.btn-danger { background: #c0392b; color: white; }
+.btn-danger:hover { opacity: 0.85; }
+.btn-outline { background: transparent; color: var(--forest); border: 2px solid var(--forest); }
+.btn-outline:hover { background: var(--forest); color: var(--cream); }
+
+/* Detection history */
+.detection-card {
+  background: var(--cream); border-radius: 18px; padding: 20px 24px;
+  display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px;
+  border: 1px solid rgba(74,140,92,0.1); margin-bottom: 14px; transition: all 0.25s;
+}
+.detection-card:hover { box-shadow: 0 8px 24px rgba(26,58,42,0.08); transform: translateX(4px); }
+.det-name { font-family: 'Playfair Display', serif; font-size: 1rem; color: var(--forest); }
+.det-meta { font-size: 0.78rem; color: var(--moss); margin-top: 3px; font-weight: 300; }
+.confidence-bar { height: 6px; background: rgba(74,140,92,0.15); border-radius: 10px; width: 120px; overflow: hidden; }
+.confidence-fill { height: 100%; background: var(--fern); border-radius: 10px; }
+
+/* Stats */
+.mini-stats { display: grid; grid-template-columns: repeat(3,1fr); gap: 16px; margin-bottom: 24px; }
+.mini-stat { background: var(--cream); border-radius: 18px; padding: 20px; text-align: center; border: 1px solid rgba(74,140,92,0.1); }
+.mini-stat-num { font-family: 'Playfair Display', serif; font-size: 2rem; color: var(--fern); }
+.mini-stat-label { font-size: 0.75rem; color: var(--moss); margin-top: 4px; letter-spacing: 0.05em; font-weight: 300; }
+
+/* Notification */
+.notif { position: fixed; top: 88px; right: 24px; padding: 13px 22px; border-radius: 100px; color: var(--cream); z-index: 9999; font-size: 0.85rem; animation: slideIn 0.3s ease; display: flex; align-items: center; gap: 9px; box-shadow: 0 8px 24px rgba(26,58,42,0.2); }
+.notif.success { background: var(--fern); }
+.notif.error   { background: #c0392b; }
+.notif.info    { background: var(--moss); }
+@keyframes slideIn { from { transform: translateX(110%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+
+/* Empty state */
+.empty-state { text-align: center; padding: 56px 20px; color: var(--sage); }
+.empty-state i { font-size: 3rem; margin-bottom: 16px; opacity: 0.5; display: block; }
+.empty-state p { font-size: 0.9rem; font-weight: 300; }
+
+@media (max-width: 768px) {
+  nav { padding: 16px 20px; }
+  .page { padding: 90px 20px 60px; }
+  .grid2 { grid-template-columns: 1fr; }
+  .mini-stats { grid-template-columns: 1fr; }
+  .card { padding: 24px 20px; }
+}
+</style>
+</head>
+<body>
+
+<nav>
+  <a class="nav-logo" href="prototype.html">Ver<span>dana</span></a>
+  <a class="nav-back" href="prototype.html"><i class="fas fa-arrow-left"></i> Back to Site</a>
+</nav>
+
+<div class="page" id="profilePage">
+
+  <!-- Header -->
+  <div class="profile-header">
+    <div class="avatar-circle" id="avatarCircle">?</div>
+    <div>
+      <div class="profile-name" id="profileName">Loading…</div>
+      <div class="profile-meta" id="profileMeta"></div>
+    </div>
+  </div>
+
+  <!-- Tabs -->
+  <div class="tabs">
+    <button class="tab active" onclick="switchTab('info')">Personal Info</button>
+    <button class="tab" onclick="switchTab('detections')">Detection History</button>
+    <button class="tab" onclick="switchTab('security')">Security</button>
+    <button class="tab" onclick="switchTab('danger')">Account</button>
+  </div>
+
+  <!-- ── Personal Info ── -->
+  <div class="tab-panel active" id="tab-info">
+    <div class="card">
+      <h3>Personal Information</h3>
+      <div class="grid2">
+        <div class="form-group"><label>First Name</label><input type="text" id="p-first"/></div>
+        <div class="form-group"><label>Last Name</label><input type="text" id="p-last"/></div>
+      </div>
+      <div class="form-group"><label>Email</label><input type="email" id="p-email" disabled/></div>
+      <div class="grid2">
+        <div class="form-group"><label>Phone</label><input type="tel" id="p-phone"/></div>
+        <div class="form-group">
+          <label>User Type</label>
+          <select id="p-type">
+            <option value="farmer">🌾 Farmer</option>
+            <option value="gardener">🌱 Gardener</option>
+            <option value="student">📚 Student</option>
+            <option value="researcher">🔬 Researcher</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group"><label>Member Since</label><input type="text" id="p-since" disabled/></div>
+      <button class="btn btn-primary" onclick="saveProfile()"><i class="fas fa-save"></i> Save Changes</button>
+    </div>
+  </div>
+
+  <!-- ── Detection History ── -->
+  <div class="tab-panel" id="tab-detections">
+    <div class="mini-stats">
+      <div class="mini-stat"><div class="mini-stat-num" id="totalDetections">0</div><div class="mini-stat-label">Total Detections</div></div>
+      <div class="mini-stat"><div class="mini-stat-num" id="thisMonthDet">0</div><div class="mini-stat-label">This Month</div></div>
+      <div class="mini-stat"><div class="mini-stat-num" id="topConfidence">—</div><div class="mini-stat-label">Best Confidence</div></div>
+    </div>
+    <div class="card">
+      <h3>Saved Detections</h3>
+      <div id="detectionsList"></div>
+    </div>
+  </div>
+
+  <!-- ── Security ── -->
+  <div class="tab-panel" id="tab-security">
+    <div class="card" style="max-width:480px;">
+      <h3>Change Password</h3>
+      <div class="form-group"><label>Current Password</label><input type="password" id="cur-pwd" placeholder="Enter current password"/></div>
+      <div class="form-group"><label>New Password</label><input type="password" id="new-pwd" placeholder="At least 6 characters"/></div>
+      <div class="form-group"><label>Confirm New Password</label><input type="password" id="confirm-pwd" placeholder="Repeat new password"/></div>
+      <button class="btn btn-primary" onclick="changePassword()"><i class="fas fa-lock"></i> Update Password</button>
+    </div>
+    <div class="card" style="max-width:480px;">
+      <h3>Active Sessions</h3>
+      <p style="color:var(--moss);font-size:0.88rem;font-weight:300;margin-bottom:20px;">You are currently logged in. Logging out will clear your session token from this device.</p>
+      <button class="btn btn-outline" onclick="logoutAndRedirect()"><i class="fas fa-sign-out-alt"></i> Log Out</button>
+    </div>
+  </div>
+
+  <!-- ── Danger Zone ── -->
+  <div class="tab-panel" id="tab-danger">
+    <div class="card" style="border-color:rgba(192,57,43,0.2);">
+      <h3 style="color:#c0392b;">Danger Zone</h3>
+      <p style="color:var(--moss);font-size:0.88rem;margin-bottom:20px;font-weight:300;">These actions are permanent and cannot be undone.</p>
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:18px 0;border-top:1px solid rgba(74,140,92,0.08);">
+        <div>
+          <div style="font-weight:500;">Clear Detection History</div>
+          <div style="font-size:0.82rem;color:var(--moss);font-weight:300;">Delete all your saved disease detections</div>
+        </div>
+        <button class="btn btn-danger" onclick="clearHistory()">Clear All</button>
+      </div>
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:18px 0;border-top:1px solid rgba(74,140,92,0.08);">
+        <div>
+          <div style="font-weight:500;">Unsubscribe from Newsletter</div>
+          <div style="font-size:0.82rem;color:var(--moss);font-weight:300;">Stop receiving Verdana plant tips & deals</div>
+        </div>
+        <button class="btn btn-danger" onclick="unsubscribe()">Unsubscribe</button>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+const API = '';
+const token = localStorage.getItem('verdana_token') || '';
+
+// ── Redirect if not logged in ──────────────────────────────────
+if (!token) { window.location.href = 'prototype.html'; }
+
+// ── Fetch helper ───────────────────────────────────────────────
+async function apiFetch(path, opts = {}) {
+  const headers = { 'Content-Type': 'application/json', ...(opts.headers||{}) };
+  if (token) headers['Authorization'] = `Bearer ${token}`;
+  return fetch(API + path, { ...opts, headers, credentials: 'include' });
+}
+
+// ── Load Profile ───────────────────────────────────────────────
+async function loadProfile() {
+  try {
+    const res = await apiFetch('/api/profile');
+    if (!res.ok) { window.location.href = 'prototype.html'; return; }
+    const u = await res.json();
+
+    document.getElementById('avatarCircle').textContent = u.avatar || u.firstName[0].toUpperCase();
+    document.getElementById('profileName').textContent  = u.firstName + ' ' + u.lastName;
+    document.getElementById('profileMeta').textContent  = u.email + '  ·  Member since ' + (u.createdAt?.slice(0,10) || '');
+
+    document.getElementById('p-first').value  = u.firstName || '';
+    document.getElementById('p-last').value   = u.lastName  || '';
+    document.getElementById('p-email').value  = u.email     || '';
+    document.getElementById('p-phone').value  = u.phone     || '';
+    document.getElementById('p-since').value  = u.createdAt?.slice(0,10) || '';
+    document.getElementById('p-type').value   = u.userType  || 'gardener';
+
+    document.getElementById('totalDetections').textContent = u.detectionsCount || 0;
+  } catch(e) { notify('Could not load profile — is the backend running?', 'error'); }
+}
+
+// ── Save Profile ───────────────────────────────────────────────
+async function saveProfile() {
+  const btn = event.target;
+  btn.textContent = 'Saving…'; btn.disabled = true;
+  try {
+    const res  = await apiFetch('/api/profile', {
+      method: 'PUT', body: JSON.stringify({
+        firstName: document.getElementById('p-first').value,
+        lastName:  document.getElementById('p-last').value,
+        phone:     document.getElementById('p-phone').value,
+        userType:  document.getElementById('p-type').value
+      })
+    });
+    const data = await res.json();
+    if (!res.ok) { notify(data.error || 'Update failed', 'error'); }
+    else { notify('Profile updated! ✓', 'success'); await loadProfile(); }
+  } catch(e) { notify('Backend unreachable', 'error'); }
+  btn.innerHTML = '<i class="fas fa-save"></i> Save Changes'; btn.disabled = false;
+}
+
+// ── Detections ─────────────────────────────────────────────────
+async function loadDetections() {
+  try {
+    const res  = await apiFetch('/api/detections?per_page=100');
+    const data = await res.json();
+    const items = data.items || [];
+
+    document.getElementById('totalDetections').textContent = data.total || items.length;
+
+    const thisMonth = items.filter(d => d.created_at?.slice(0,7) === new Date().toISOString().slice(0,7)).length;
+    document.getElementById('thisMonthDet').textContent = thisMonth;
+
+    const best = items.reduce((max,d) => Math.max(max, d.confidence||0), 0);
+    document.getElementById('topConfidence').textContent = best ? best + '%' : '—';
+
+    const list = document.getElementById('detectionsList');
+    if (!items.length) {
+      list.innerHTML = `<div class="empty-state"><i class="fas fa-seedling"></i><p>No detections saved yet. Use the AI detector on the home page!</p></div>`;
+      return;
+    }
+    list.innerHTML = items.map(d => `
+      <div class="detection-card">
+        <div>
+          <div class="det-name">${d.disease_name || 'Unknown'}</div>
+          <div class="det-meta">${d.plant_type || 'Unknown plant'} · ${d.created_at?.slice(0,10) || ''}</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:20px;flex-wrap:wrap;">
+          <div>
+            <div style="font-size:0.75rem;color:var(--sage);margin-bottom:4px;">Confidence</div>
+            <div style="display:flex;align-items:center;gap:8px;">
+              <div class="confidence-bar"><div class="confidence-fill" style="width:${d.confidence||0}%"></div></div>
+              <span style="font-size:0.82rem;font-weight:500;">${d.confidence||0}%</span>
+            </div>
+          </div>
+          <button onclick="deleteDetection(${d.id})" style="background:transparent;border:1.5px solid rgba(192,57,43,0.3);color:#c0392b;padding:7px 14px;border-radius:100px;cursor:pointer;font-size:0.78rem;font-family:'DM Sans',sans-serif;transition:all 0.2s;">
+            <i class="fas fa-trash-alt"></i>
+          </button>
+        </div>
+      </div>
+    `).join('');
+  } catch(e) { notify('Could not load detections', 'error'); }
+}
+
+async function deleteDetection(id) {
+  if (!confirm('Delete this detection?')) return;
+  try {
+    const res = await apiFetch(`/api/detections/${id}`, { method: 'DELETE' });
+    if (res.ok) { notify('Deleted ✓', 'success'); await loadDetections(); }
+    else notify('Delete failed', 'error');
+  } catch(e) { notify('Error', 'error'); }
+}
+
+async function clearHistory() {
+  if (!confirm('Delete ALL your detections? This cannot be undone.')) return;
+  try {
+    const res  = await apiFetch('/api/detections?per_page=500');
+    const data = await res.json();
+    await Promise.all((data.items||[]).map(d => apiFetch(`/api/detections/${d.id}`, { method: 'DELETE' })));
+    notify('History cleared ✓', 'success');
+    await loadDetections();
+  } catch(e) { notify('Error', 'error'); }
+}
+
+// ── Change Password ────────────────────────────────────────────
+async function changePassword() {
+  const cur     = document.getElementById('cur-pwd').value;
+  const newPwd  = document.getElementById('new-pwd').value;
+  const confirm = document.getElementById('confirm-pwd').value;
+  if (!cur || !newPwd) { notify('All fields required', 'error'); return; }
+  if (newPwd !== confirm) { notify('Passwords do not match', 'error'); return; }
+  if (newPwd.length < 6) { notify('Password must be at least 6 characters', 'error'); return; }
+  try {
+    const res  = await apiFetch('/api/profile/password', {
+      method: 'PUT', body: JSON.stringify({ currentPassword: cur, newPassword: newPwd })
+    });
+    const data = await res.json();
+    if (!res.ok) { notify(data.error || 'Failed', 'error'); return; }
+    notify('Password updated! ✓', 'success');
+    ['cur-pwd','new-pwd','confirm-pwd'].forEach(id => document.getElementById(id).value = '');
+  } catch(e) { notify('Backend unreachable', 'error'); }
+}
+
+// ── Newsletter unsubscribe ─────────────────────────────────────
+async function unsubscribe() {
+  const email = document.getElementById('p-email').value;
+  if (!confirm('Unsubscribe ' + email + ' from the newsletter?')) return;
+  try {
+    const res  = await apiFetch('/api/newsletter/unsubscribe', {
+      method: 'POST', body: JSON.stringify({ email })
+    });
+    const data = await res.json();
+    notify(data.message || 'Unsubscribed', 'success');
+  } catch(e) { notify('Error', 'error'); }
+}
+
+// ── Logout ────────────────────────────────────────────────────
+function logoutAndRedirect() {
+  if (!confirm('Log out of your account?')) return;
+  localStorage.removeItem('verdana_token');
+  window.location.href = 'prototype.html';
+}
+
+// ── Tabs ──────────────────────────────────────────────────────
+function switchTab(name) {
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('tab-' + name).classList.add('active');
+  event.target.classList.add('active');
+  if (name === 'detections') loadDetections();
+}
+
+// ── Notify ────────────────────────────────────────────────────
+function notify(msg, type = 'info') {
+  const existing = document.querySelector('.notif');
+  if (existing) existing.remove();
+  const n = document.createElement('div');
+  n.className = `notif ${type}`;
+  const icons = { success: 'check-circle', error: 'exclamation-circle', info: 'info-circle' };
+  n.innerHTML = `<i class="fas fa-${icons[type]||'info-circle'}"></i> ${msg}`;
+  document.body.appendChild(n);
+  setTimeout(() => n.remove(), 3500);
+}
+
+// ── Boot ─────────────────────────────────────────────────────
+loadProfile();
+</script>
+</body>
+</html>

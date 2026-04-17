@@ -1,0 +1,574 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Verdana — Admin Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"/>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --forest: #1a3a2a; --moss: #2d5a3d; --fern: #4a8c5c;
+  --sage: #7ab592; --mint: #b2d8c4; --cream: #f5f0e8;
+  --parchment: #ede5d4; --white: #fdfcf8; --gold: #c9a84c;
+  --danger: #c0392b; --warn: #d4603a;
+}
+body { font-family: 'DM Sans', sans-serif; background: var(--cream); color: var(--forest); min-height: 100vh; }
+
+/* ── Login Gate ── */
+#loginGate {
+  min-height: 100vh; display: flex; align-items: center; justify-content: center;
+  background: radial-gradient(ellipse at 50% 40%, rgba(74,140,92,0.12) 0%, transparent 60%);
+}
+.login-card {
+  background: var(--white); border-radius: 28px; padding: 56px 48px;
+  width: 100%; max-width: 420px; border: 1px solid rgba(74,140,92,0.1);
+  box-shadow: 0 24px 56px rgba(26,58,42,0.12);
+}
+.login-card h1 { font-family: 'Playfair Display', serif; font-size: 2rem; color: var(--forest); margin-bottom: 6px; }
+.login-card .sub { color: var(--moss); font-size: 0.88rem; margin-bottom: 32px; font-weight: 300; }
+
+/* ── Layout ── */
+#dashboard { display: none; }
+.sidebar {
+  position: fixed; left: 0; top: 0; bottom: 0; width: 240px;
+  background: var(--forest); padding: 28px 0;
+  display: flex; flex-direction: column;
+}
+.sidebar-logo { font-family: 'Playfair Display', serif; font-size: 1.4rem; color: var(--cream); padding: 0 28px 28px; border-bottom: 1px solid rgba(178,216,196,0.1); }
+.sidebar-logo span { color: var(--sage); font-style: italic; }
+.sidebar-logo small { display: block; font-size: 0.65rem; color: var(--mint); opacity: 0.6; letter-spacing: 0.15em; text-transform: uppercase; margin-top: 2px; font-style: normal; font-family: 'DM Sans', sans-serif; }
+.nav-item {
+  display: flex; align-items: center; gap: 12px; padding: 13px 28px;
+  color: rgba(178,216,196,0.65); cursor: pointer; transition: all 0.2s;
+  font-size: 0.88rem; font-weight: 500; letter-spacing: 0.03em; border: none; background: none; width: 100%; text-align: left;
+}
+.nav-item i { width: 18px; text-align: center; }
+.nav-item:hover { color: var(--mint); background: rgba(255,255,255,0.04); }
+.nav-item.active { color: var(--cream); background: rgba(74,140,92,0.25); border-right: 3px solid var(--fern); }
+.sidebar-bottom { margin-top: auto; padding: 20px 28px; border-top: 1px solid rgba(178,216,196,0.1); }
+.logout-pill { width: 100%; padding: 10px; border-radius: 100px; border: 1.5px solid rgba(178,216,196,0.25); background: transparent; color: var(--mint); cursor: pointer; font-family: 'DM Sans', sans-serif; font-size: 0.82rem; transition: all 0.25s; }
+.logout-pill:hover { background: rgba(255,255,255,0.08); }
+
+.main { margin-left: 240px; padding: 40px 48px; min-height: 100vh; }
+.topbar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 40px; }
+.page-title { font-family: 'Playfair Display', serif; font-size: 2rem; color: var(--forest); }
+.page-title em { font-style: italic; color: var(--fern); }
+.admin-badge { background: var(--fern); color: var(--cream); padding: 6px 16px; border-radius: 100px; font-size: 0.75rem; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; }
+
+/* ── Panels ── */
+.panel { display: none; }
+.panel.active { display: block; }
+
+/* ── Stat Cards ── */
+.stat-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 20px; margin-bottom: 40px; }
+.stat-card {
+  background: var(--white); border-radius: 20px; padding: 28px 24px;
+  border: 1px solid rgba(74,140,92,0.1); transition: all 0.3s;
+}
+.stat-card:hover { transform: translateY(-4px); box-shadow: 0 16px 40px rgba(26,58,42,0.1); }
+.stat-icon { width: 44px; height: 44px; border-radius: 14px; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; margin-bottom: 16px; }
+.stat-icon.green  { background: rgba(74,140,92,0.12); color: var(--fern); }
+.stat-icon.gold   { background: rgba(201,168,76,0.12); color: var(--gold); }
+.stat-icon.warn   { background: rgba(212,96,58,0.12); color: var(--warn); }
+.stat-icon.moss   { background: rgba(45,90,61,0.1); color: var(--moss); }
+.stat-num { font-family: 'Playfair Display', serif; font-size: 2.4rem; color: var(--forest); line-height: 1; }
+.stat-label { font-size: 0.78rem; color: var(--moss); margin-top: 6px; letter-spacing: 0.04em; font-weight: 300; }
+.stat-delta { font-size: 0.75rem; color: var(--fern); margin-top: 8px; }
+
+/* ── Table ── */
+.card { background: var(--white); border-radius: 20px; border: 1px solid rgba(74,140,92,0.1); overflow: hidden; }
+.card-header { padding: 22px 28px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid rgba(74,140,92,0.08); }
+.card-title { font-family: 'Playfair Display', serif; font-size: 1.15rem; color: var(--forest); }
+.search-box { padding: 8px 16px; border: 1.5px solid rgba(74,140,92,0.2); border-radius: 100px; font-family: 'DM Sans', sans-serif; font-size: 0.85rem; background: var(--cream); color: var(--forest); outline: none; transition: border 0.2s; }
+.search-box:focus { border-color: var(--fern); }
+table { width: 100%; border-collapse: collapse; }
+th { padding: 12px 20px; text-align: left; font-size: 0.72rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--sage); font-weight: 600; background: var(--cream); }
+td { padding: 14px 20px; font-size: 0.88rem; color: var(--moss); border-top: 1px solid rgba(74,140,92,0.06); }
+tr:hover td { background: rgba(178,216,196,0.08); }
+.badge { display: inline-block; padding: 3px 10px; border-radius: 100px; font-size: 0.68rem; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; }
+.badge-admin  { background: rgba(74,140,92,0.15); color: var(--fern); }
+.badge-user   { background: rgba(45,90,61,0.08); color: var(--moss); }
+.badge-unread { background: rgba(212,96,58,0.12); color: var(--warn); }
+.badge-read   { background: rgba(74,140,92,0.1); color: var(--sage); }
+
+/* ── Pagination ── */
+.pagination { display: flex; align-items: center; justify-content: center; gap: 8px; padding: 20px; }
+.page-btn { width: 34px; height: 34px; border-radius: 10px; border: 1.5px solid rgba(74,140,92,0.2); background: transparent; color: var(--moss); cursor: pointer; font-family: 'DM Sans', sans-serif; font-size: 0.85rem; transition: all 0.2s; }
+.page-btn:hover, .page-btn.active { background: var(--forest); border-color: var(--forest); color: var(--cream); }
+.page-btn:disabled { opacity: 0.35; cursor: default; }
+
+/* ── Form ── */
+.form-row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.form-group { margin-bottom: 16px; }
+.form-group label { display: block; margin-bottom: 6px; font-size: 0.82rem; color: var(--moss); font-weight: 500; letter-spacing: 0.04em; text-transform: uppercase; }
+.form-group input, .form-group select, .form-group textarea {
+  width: 100%; padding: 12px 16px; border: 2px solid rgba(74,140,92,0.18);
+  border-radius: 14px; font-family: 'DM Sans', sans-serif; font-size: 0.9rem;
+  background: var(--cream); color: var(--forest); transition: border 0.2s; outline: none;
+}
+.form-group input:focus, .form-group select:focus { border-color: var(--fern); box-shadow: 0 0 0 3px rgba(74,140,92,0.1); }
+.btn-primary { background: var(--forest); color: var(--cream); padding: 12px 28px; border: none; border-radius: 100px; font-family: 'DM Sans', sans-serif; font-size: 0.88rem; font-weight: 500; letter-spacing: 0.05em; text-transform: uppercase; cursor: pointer; transition: all 0.25s; }
+.btn-primary:hover { background: var(--fern); transform: translateY(-2px); box-shadow: 0 8px 20px rgba(74,140,92,0.25); }
+.btn-danger { background: var(--danger); color: white; padding: 7px 16px; border: none; border-radius: 100px; font-size: 0.78rem; cursor: pointer; font-family: 'DM Sans', sans-serif; transition: all 0.2s; }
+.btn-danger:hover { opacity: 0.85; }
+.btn-sm { background: var(--fern); color: var(--cream); padding: 6px 14px; border: none; border-radius: 100px; font-size: 0.78rem; cursor: pointer; font-family: 'DM Sans', sans-serif; transition: all 0.2s; }
+.btn-sm:hover { background: var(--forest); }
+
+/* ── Notification ── */
+.notif { position: fixed; top: 24px; right: 24px; padding: 13px 22px; border-radius: 100px; color: var(--cream); z-index: 9999; font-size: 0.85rem; animation: slideIn 0.3s ease; display: flex; align-items: center; gap: 9px; box-shadow: 0 8px 24px rgba(26,58,42,0.2); }
+.notif.success { background: var(--fern); }
+.notif.error   { background: var(--danger); }
+.notif.info    { background: var(--moss); }
+@keyframes slideIn { from { transform: translateX(110%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+
+/* ── Loading ── */
+.spinner { display: inline-block; width: 20px; height: 20px; border: 2px solid rgba(74,140,92,0.2); border-top-color: var(--fern); border-radius: 50%; animation: spin 0.7s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.loading-row td { text-align: center; padding: 40px; color: var(--sage); }
+.empty-row td { text-align: center; padding: 40px; color: var(--sage); font-style: italic; }
+
+@media (max-width: 1024px) { .stat-grid { grid-template-columns: repeat(2,1fr); } }
+@media (max-width: 768px) { .sidebar { display: none; } .main { margin-left: 0; padding: 20px; } }
+</style>
+</head>
+<body>
+
+<!-- ── Login Gate ── -->
+<div id="loginGate">
+  <div class="login-card">
+    <h1>Ver<span style="color:var(--fern);font-style:italic">dana</span></h1>
+    <p class="sub">Admin Dashboard — authorised access only</p>
+    <div class="form-group">
+      <label>Email</label>
+      <input type="email" id="adminEmail" placeholder="admin@verdana.com" onkeydown="if(event.key==='Enter')adminLogin()"/>
+    </div>
+    <div class="form-group">
+      <label>Password</label>
+      <input type="password" id="adminPassword" placeholder="••••••••" onkeydown="if(event.key==='Enter')adminLogin()"/>
+    </div>
+    <button class="btn-primary" style="width:100%;margin-top:8px;" onclick="adminLogin()" id="loginBtn">
+      Login to Dashboard
+    </button>
+    <p style="text-align:center;margin-top:16px;font-size:0.8rem;color:var(--sage);">
+      <a href="prototype.html" style="color:var(--fern);text-decoration:none;">← Back to site</a>
+    </p>
+  </div>
+</div>
+
+<!-- ── Dashboard ── -->
+<div id="dashboard">
+  <aside class="sidebar">
+    <div class="sidebar-logo">Ver<span>dana</span><small>Admin Panel</small></div>
+    <nav style="margin-top:20px;flex:1;">
+      <button class="nav-item active" onclick="showPanel('overview')" id="nav-overview">
+        <i class="fas fa-chart-pie"></i> Overview
+      </button>
+      <button class="nav-item" onclick="showPanel('users')" id="nav-users">
+        <i class="fas fa-users"></i> Users
+      </button>
+      <button class="nav-item" onclick="showPanel('detections')" id="nav-detections">
+        <i class="fas fa-microscope"></i> Detections
+      </button>
+      <button class="nav-item" onclick="showPanel('messages')" id="nav-messages">
+        <i class="fas fa-envelope"></i> Messages
+        <span id="unreadBadge" style="margin-left:auto;background:var(--warn);color:white;font-size:0.68rem;padding:2px 8px;border-radius:100px;display:none;"></span>
+      </button>
+      <button class="nav-item" onclick="showPanel('newsletter')" id="nav-newsletter">
+        <i class="fas fa-paper-plane"></i> Newsletter
+      </button>
+      <button class="nav-item" onclick="showPanel('create-admin')" id="nav-create-admin">
+        <i class="fas fa-user-shield"></i> Create Admin
+      </button>
+    </nav>
+    <div class="sidebar-bottom">
+      <div style="font-size:0.78rem;color:rgba(178,216,196,0.5);margin-bottom:10px;" id="adminInfo"></div>
+      <button class="logout-pill" onclick="adminLogout()"><i class="fas fa-sign-out-alt"></i> Logout</button>
+    </div>
+  </aside>
+
+  <main class="main">
+    <div class="topbar">
+      <h1 class="page-title" id="pageTitle">Overview <em>Dashboard</em></h1>
+      <span class="admin-badge"><i class="fas fa-shield-alt"></i> Admin</span>
+    </div>
+
+    <!-- ── Overview Panel ── -->
+    <div class="panel active" id="panel-overview">
+      <div class="stat-grid" id="statGrid">
+        <div class="stat-card"><div class="stat-icon green"><i class="fas fa-users"></i></div><div class="stat-num" id="s-users">—</div><div class="stat-label">Total Users</div><div class="stat-delta" id="s-users-delta"></div></div>
+        <div class="stat-card"><div class="stat-icon gold"><i class="fas fa-microscope"></i></div><div class="stat-num" id="s-detections">—</div><div class="stat-label">Total Detections</div><div class="stat-delta" id="s-det-delta"></div></div>
+        <div class="stat-card"><div class="stat-icon warn"><i class="fas fa-envelope"></i></div><div class="stat-num" id="s-messages">—</div><div class="stat-label">Contact Messages</div><div class="stat-delta" id="s-msg-unread" style="color:var(--warn);"></div></div>
+        <div class="stat-card"><div class="stat-icon moss"><i class="fas fa-paper-plane"></i></div><div class="stat-num" id="s-newsletter">—</div><div class="stat-label">Newsletter Subs</div></div>
+      </div>
+
+      <div class="card">
+        <div class="card-header"><span class="card-title">Recent Users</span><button class="btn-sm" onclick="showPanel('users')">View All</button></div>
+        <table><thead><tr><th>Name</th><th>Email</th><th>Type</th><th>Joined</th><th>Role</th></tr></thead>
+        <tbody id="recentUsersBody"><tr class="loading-row"><td colspan="5"><span class="spinner"></span></td></tr></tbody></table>
+      </div>
+    </div>
+
+    <!-- ── Users Panel ── -->
+    <div class="panel" id="panel-users">
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">All Users</span>
+          <input class="search-box" placeholder="Search users…" oninput="filterTable('usersBody', this.value)" />
+        </div>
+        <table>
+          <thead><tr><th>#</th><th>Name</th><th>Email</th><th>Type</th><th>Joined</th><th>Last Login</th><th>Role</th></tr></thead>
+          <tbody id="usersBody"><tr class="loading-row"><td colspan="7"><span class="spinner"></span></td></tr></tbody>
+        </table>
+        <div class="pagination" id="usersPagination"></div>
+      </div>
+    </div>
+
+    <!-- ── Detections Panel ── -->
+    <div class="panel" id="panel-detections">
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">All Detections</span>
+          <input class="search-box" placeholder="Search…" oninput="filterTable('detectionsBody', this.value)" />
+        </div>
+        <table>
+          <thead><tr><th>#</th><th>User</th><th>Plant</th><th>Disease</th><th>Confidence</th><th>Date</th></tr></thead>
+          <tbody id="detectionsBody"><tr class="loading-row"><td colspan="6"><span class="spinner"></span></td></tr></tbody>
+        </table>
+        <div class="pagination" id="detectionsPagination"></div>
+      </div>
+    </div>
+
+    <!-- ── Messages Panel ── -->
+    <div class="panel" id="panel-messages">
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">Contact Messages</span>
+          <input class="search-box" placeholder="Search…" oninput="filterTable('messagesBody', this.value)" />
+        </div>
+        <table>
+          <thead><tr><th>#</th><th>Name</th><th>Email</th><th>Subject</th><th>Date</th><th>Status</th><th>Action</th></tr></thead>
+          <tbody id="messagesBody"><tr class="loading-row"><td colspan="7"><span class="spinner"></span></td></tr></tbody>
+        </table>
+        <div class="pagination" id="messagesPagination"></div>
+      </div>
+    </div>
+
+    <!-- ── Newsletter Panel ── -->
+    <div class="panel" id="panel-newsletter">
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">Newsletter Subscribers</span>
+          <input class="search-box" placeholder="Search emails…" oninput="filterTable('newsletterBody', this.value)" />
+        </div>
+        <table>
+          <thead><tr><th>#</th><th>Email</th><th>Status</th><th>Subscribed</th></tr></thead>
+          <tbody id="newsletterBody"><tr class="loading-row"><td colspan="4"><span class="spinner"></span></td></tr></tbody>
+        </table>
+        <div class="pagination" id="newsletterPagination"></div>
+      </div>
+    </div>
+
+    <!-- ── Create Admin Panel ── -->
+    <div class="panel" id="panel-create-admin">
+      <div class="card" style="max-width:560px;">
+        <div class="card-header"><span class="card-title">Create Admin Account</span></div>
+        <div style="padding:32px;">
+          <div class="form-row2">
+            <div class="form-group"><label>First Name</label><input type="text" id="ca-first" placeholder="Admin"/></div>
+            <div class="form-group"><label>Last Name</label><input type="text" id="ca-last" placeholder="User"/></div>
+          </div>
+          <div class="form-group"><label>Email</label><input type="email" id="ca-email" placeholder="admin@verdana.com"/></div>
+          <div class="form-group"><label>Password</label><input type="password" id="ca-password" placeholder="Min 8 characters"/></div>
+          <div class="form-group"><label>Confirm Password</label><input type="password" id="ca-confirm" placeholder="Repeat password"/></div>
+          <button class="btn-primary" onclick="createAdmin()"><i class="fas fa-user-plus"></i> Create Admin Account</button>
+        </div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<script>
+const API = '';
+let adminToken = localStorage.getItem('verdana_admin_token') || '';
+let allUsersData = [], allDetectionsData = [], allMessagesData = [], allNewsletterData = [];
+
+// ── Fetch ──────────────────────────────────────────────────────
+async function apiFetch(path, opts = {}) {
+  const headers = { 'Content-Type': 'application/json', ...(opts.headers || {}) };
+  if (adminToken) headers['Authorization'] = `Bearer ${adminToken}`;
+  const res = await fetch(API + path, { ...opts, headers, credentials: 'include' });
+  return res;
+}
+
+// ── Login ──────────────────────────────────────────────────────
+async function adminLogin() {
+  const email    = document.getElementById('adminEmail').value.trim();
+  const password = document.getElementById('adminPassword').value;
+  const btn      = document.getElementById('loginBtn');
+  if (!email || !password) { notify('Enter email and password', 'error'); return; }
+  btn.textContent = 'Logging in…'; btn.disabled = true;
+  try {
+    const res  = await fetch(API + '/api/auth/login', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password }), credentials: 'include'
+    });
+    const data = await res.json();
+    if (!res.ok) { notify(data.error || 'Login failed', 'error'); btn.textContent='Login to Dashboard'; btn.disabled=false; return; }
+    if (!data.user.isAdmin) { notify('This account does not have admin privileges', 'error'); btn.textContent='Login to Dashboard'; btn.disabled=false; return; }
+    adminToken = data.token;
+    localStorage.setItem('verdana_admin_token', adminToken);
+    document.getElementById('adminInfo').textContent = data.user.firstName + ' ' + data.user.lastName;
+    bootDashboard();
+  } catch(e) {
+    notify('Cannot reach server — is it running?', 'error');
+    btn.textContent = 'Login to Dashboard'; btn.disabled = false;
+  }
+}
+
+function adminLogout() {
+  adminToken = '';
+  localStorage.removeItem('verdana_admin_token');
+  document.getElementById('dashboard').style.display = 'none';
+  document.getElementById('loginGate').style.display = 'flex';
+}
+
+// ── Boot ───────────────────────────────────────────────────────
+async function bootDashboard() {
+  document.getElementById('loginGate').style.display = 'none';
+  document.getElementById('dashboard').style.display = 'block';
+  await loadAll();
+}
+
+async function loadAll() {
+  await Promise.all([loadStats(), loadUsers(), loadDetections(), loadMessages(), loadNewsletter()]);
+}
+
+// ── Auto-login if token saved ──────────────────────────────────
+window.addEventListener('DOMContentLoaded', async () => {
+  if (adminToken) {
+    try {
+      const res = await apiFetch('/api/auth/me');
+      if (res.ok) {
+        const u = await res.json();
+        if (u.isAdmin) {
+          document.getElementById('adminInfo').textContent = u.firstName + ' ' + u.lastName;
+          bootDashboard(); return;
+        }
+      }
+    } catch(e) {}
+    adminToken = ''; localStorage.removeItem('verdana_admin_token');
+  }
+});
+
+// ── Stats ──────────────────────────────────────────────────────
+async function loadStats() {
+  try {
+    const res  = await apiFetch('/api/admin/stats');
+    const s    = await res.json();
+    document.getElementById('s-users').textContent       = s.totalUsers       ?? '—';
+    document.getElementById('s-detections').textContent  = s.totalDetections  ?? '—';
+    document.getElementById('s-messages').textContent    = s.totalMessages    ?? '—';
+    document.getElementById('s-newsletter').textContent  = s.newsletterSubs   ?? '—';
+    document.getElementById('s-users-delta').textContent = s.recentUsers ? `+${s.recentUsers} this week` : '';
+    document.getElementById('s-det-delta').textContent   = s.recentDetections ? `+${s.recentDetections} this week` : '';
+    if (s.unreadMessages > 0) {
+      document.getElementById('s-msg-unread').textContent = s.unreadMessages + ' unread';
+      const badge = document.getElementById('unreadBadge');
+      badge.textContent = s.unreadMessages; badge.style.display = 'inline';
+    }
+  } catch(e) {}
+}
+
+// ── Users ──────────────────────────────────────────────────────
+async function loadUsers() {
+  try {
+    const res  = await apiFetch('/api/admin/users?page=1&per_page=200');
+    const data = await res.json();
+    allUsersData = data.items || [];
+    renderUsers(allUsersData);
+    // Recent users for overview
+    const recent = allUsersData.slice(0,5);
+    document.getElementById('recentUsersBody').innerHTML = recent.length
+      ? recent.map(u => `<tr>
+          <td><strong>${u.first_name} ${u.last_name}</strong></td>
+          <td style="color:var(--moss)">${u.email}</td>
+          <td><span class="badge badge-user">${u.user_type}</span></td>
+          <td style="color:var(--sage)">${u.created_at?.slice(0,10)}</td>
+          <td><span class="badge ${u.is_admin ? 'badge-admin' : 'badge-user'}">${u.is_admin ? 'Admin' : 'User'}</span></td>
+        </tr>`).join('')
+      : '<tr class="empty-row"><td colspan="5">No users yet</td></tr>';
+  } catch(e) {}
+}
+
+function renderUsers(rows) {
+  const body = document.getElementById('usersBody');
+  body.innerHTML = rows.length
+    ? rows.map((u,i) => `<tr>
+        <td style="color:var(--sage)">${i+1}</td>
+        <td><strong>${u.first_name} ${u.last_name}</strong></td>
+        <td>${u.email}</td>
+        <td><span class="badge badge-user">${u.user_type}</span></td>
+        <td>${u.created_at?.slice(0,10) || '—'}</td>
+        <td>${u.last_login?.slice(0,10) || 'Never'}</td>
+        <td><span class="badge ${u.is_admin ? 'badge-admin' : 'badge-user'}">${u.is_admin ? 'Admin' : 'User'}</span></td>
+      </tr>`).join('')
+    : '<tr class="empty-row"><td colspan="7">No users found</td></tr>';
+}
+
+// ── Detections ─────────────────────────────────────────────────
+async function loadDetections() {
+  try {
+    const res  = await apiFetch('/api/admin/detections?per_page=200');
+    const data = await res.json();
+    allDetectionsData = data.items || [];
+    renderDetections(allDetectionsData);
+  } catch(e) {}
+}
+
+function renderDetections(rows) {
+  const body = document.getElementById('detectionsBody');
+  body.innerHTML = rows.length
+    ? rows.map((d,i) => `<tr>
+        <td style="color:var(--sage)">${i+1}</td>
+        <td>${d.user_email || d.user_id}</td>
+        <td>${d.plant_type || '—'}</td>
+        <td><strong>${d.disease_name || '—'}</strong></td>
+        <td>
+          <div style="display:flex;align-items:center;gap:8px;">
+            <div style="flex:1;height:6px;background:rgba(74,140,92,0.15);border-radius:10px;overflow:hidden;">
+              <div style="height:100%;width:${d.confidence||0}%;background:var(--fern);border-radius:10px;"></div>
+            </div>
+            <span style="font-size:0.78rem;color:var(--moss)">${d.confidence||0}%</span>
+          </div>
+        </td>
+        <td>${d.created_at?.slice(0,10) || '—'}</td>
+      </tr>`).join('')
+    : '<tr class="empty-row"><td colspan="6">No detections yet</td></tr>';
+}
+
+// ── Messages ───────────────────────────────────────────────────
+async function loadMessages() {
+  try {
+    const res  = await apiFetch('/api/admin/messages?per_page=200');
+    const data = await res.json();
+    allMessagesData = data.items || [];
+    renderMessages(allMessagesData);
+  } catch(e) {}
+}
+
+function renderMessages(rows) {
+  const body = document.getElementById('messagesBody');
+  body.innerHTML = rows.length
+    ? rows.map((m,i) => `<tr>
+        <td style="color:var(--sage)">${i+1}</td>
+        <td><strong>${m.name}</strong></td>
+        <td>${m.email}</td>
+        <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${m.subject}">${m.subject}</td>
+        <td>${m.created_at?.slice(0,10) || '—'}</td>
+        <td><span class="badge badge-${m.status}">${m.status}</span></td>
+        <td>
+          ${m.status === 'unread'
+            ? `<button class="btn-sm" onclick="markRead(${m.id})">Mark Read</button>`
+            : `<span style="color:var(--sage);font-size:0.78rem;">✓ Done</span>`}
+        </td>
+      </tr>`).join('')
+    : '<tr class="empty-row"><td colspan="7">No messages yet</td></tr>';
+}
+
+async function markRead(id) {
+  try {
+    await apiFetch(`/api/admin/messages/${id}/read`, { method: 'PUT' });
+    notify('Message marked as read', 'success');
+    await loadMessages();
+    await loadStats();
+  } catch(e) { notify('Failed', 'error'); }
+}
+
+// ── Newsletter ─────────────────────────────────────────────────
+async function loadNewsletter() {
+  try {
+    const res  = await apiFetch('/api/admin/newsletter?per_page=200');
+    const data = await res.json();
+    allNewsletterData = data.items || [];
+    renderNewsletter(allNewsletterData);
+  } catch(e) {}
+}
+
+function renderNewsletter(rows) {
+  const body = document.getElementById('newsletterBody');
+  body.innerHTML = rows.length
+    ? rows.map((n,i) => `<tr>
+        <td style="color:var(--sage)">${i+1}</td>
+        <td>${n.email}</td>
+        <td><span class="badge ${n.subscribed ? 'badge-admin' : 'badge-user'}">${n.subscribed ? 'Active' : 'Unsubscribed'}</span></td>
+        <td>${n.created_at?.slice(0,10) || '—'}</td>
+      </tr>`).join('')
+    : '<tr class="empty-row"><td colspan="4">No subscribers yet</td></tr>';
+}
+
+// ── Create Admin ───────────────────────────────────────────────
+async function createAdmin() {
+  const first    = document.getElementById('ca-first').value.trim();
+  const last     = document.getElementById('ca-last').value.trim();
+  const email    = document.getElementById('ca-email').value.trim();
+  const password = document.getElementById('ca-password').value;
+  const confirm  = document.getElementById('ca-confirm').value;
+  if (!first || !last || !email || !password) { notify('All fields required', 'error'); return; }
+  if (password !== confirm) { notify('Passwords do not match', 'error'); return; }
+  if (password.length < 8) { notify('Password must be at least 8 characters', 'error'); return; }
+  try {
+    const res  = await apiFetch('/api/admin/create-admin', {
+      method: 'POST', body: JSON.stringify({ firstName: first, lastName: last, email, password })
+    });
+    const data = await res.json();
+    if (!res.ok) { notify(data.error || 'Failed', 'error'); return; }
+    notify('Admin account created! ✓', 'success');
+    ['ca-first','ca-last','ca-email','ca-password','ca-confirm'].forEach(id => document.getElementById(id).value = '');
+    await loadUsers();
+  } catch(e) { notify('Backend error', 'error'); }
+}
+
+// ── Navigation ─────────────────────────────────────────────────
+const panelTitles = {
+  overview: 'Overview <em>Dashboard</em>',
+  users: 'All <em>Users</em>',
+  detections: 'Plant <em>Detections</em>',
+  messages: 'Contact <em>Messages</em>',
+  newsletter: 'Newsletter <em>Subscribers</em>',
+  'create-admin': 'Create <em>Admin</em>'
+};
+
+function showPanel(name) {
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('panel-' + name).classList.add('active');
+  document.getElementById('nav-' + name).classList.add('active');
+  document.getElementById('pageTitle').innerHTML = panelTitles[name] || name;
+}
+
+// ── Search filter ──────────────────────────────────────────────
+function filterTable(tbodyId, query) {
+  const q     = query.toLowerCase();
+  const tbody = document.getElementById(tbodyId);
+  Array.from(tbody.querySelectorAll('tr')).forEach(row => {
+    row.style.display = row.textContent.toLowerCase().includes(q) ? '' : 'none';
+  });
+}
+
+// ── Notify ────────────────────────────────────────────────────
+function notify(msg, type = 'info') {
+  const existing = document.querySelector('.notif');
+  if (existing) existing.remove();
+  const n = document.createElement('div');
+  n.className = `notif ${type}`;
+  const icons = { success: 'check-circle', error: 'exclamation-circle', info: 'info-circle' };
+  n.innerHTML = `<i class="fas fa-${icons[type]||'info-circle'}"></i> ${msg}`;
+  document.body.appendChild(n);
+  setTimeout(() => n.remove(), 3500);
+}
+</script>
+</body>
+</html>
