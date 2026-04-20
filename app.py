@@ -31,7 +31,7 @@ Endpoints:
 import os, uuid, hashlib, hmac, secrets, json, re, io
 from datetime import datetime, timedelta, timezone
 from functools import wraps
-from flask import Flask, request, jsonify, send_from_directory, g
+from flask import Flask, request, jsonify, send_from_directory, g, render_template
 from flask_cors import CORS
 import sqlite3
 
@@ -822,27 +822,27 @@ def admin_newsletter():
 
 @app.route('/')
 def index():
-    return send_from_directory(BASE_DIR, 'prototype.html')
+    return render_template('prototype.html')
 
 @app.route('/purchase.html')
 def purchase():
-    return send_from_directory(BASE_DIR, 'purchase.html')
+    return render_template('purchase.html')
 
 @app.route('/prototype.html')
 def prototype():
-    return send_from_directory(BASE_DIR, 'prototype.html')
+    return render_template('prototype.html')
 
 
 @app.route('/admin')
 @app.route('/admin.html')
 def admin_page():
-    return send_from_directory(BASE_DIR, 'admin.html')
+    return render_template('admin.html')
 
 
 @app.route('/profile')
 @app.route('/profile.html')
 def profile_page():
-    return send_from_directory(BASE_DIR, 'profile.html')
+    return render_template('profile.html')
 
 
 # ═══════════════════════════════════════════════════════════════
