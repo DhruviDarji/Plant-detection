@@ -882,6 +882,8 @@ def seed_admin(email: str, password: str, first: str = 'Admin', last: str = 'Use
 
 
 # ─── Boot ─────────────────────────────────────────────────────
+init_db()
+
 if __name__ == '__main__':
     import sys
     # ── CLI: python app.py create-admin email password [first] [last]
@@ -897,7 +899,6 @@ if __name__ == '__main__':
         )
         sys.exit(0)
 
-    init_db()
     print('\n🌿 Verdana Backend  ·  http://localhost:5000\n')
     print('  Pages:')
     print('  /                   → Home (prototype.html)')
