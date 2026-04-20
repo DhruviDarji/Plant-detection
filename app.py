@@ -62,14 +62,14 @@ DISEASE_RECOMMENDATIONS = {
 }
 
 def get_model():
-    """Lazy-load the Keras model on first inference request."""
+    """Lazy-load the TFLite model on first inference request."""
     global _model
     if _model is None:
         try:
-            import tensorflow as tf          # noqa: F401
-            from tensorflow import keras
+            import tensorflow as tf
             if _model_path and os.path.exists(_model_path):
-                _model = keras.models.load_model(_model_path)
+                _model = tf.lite.Interpreter(model_path=_model_path)
+                _model.allocate_tensors()
             else:
                 raise FileNotFoundError(f'Model file not found at: {_model_path}')
         except Exception as e:
@@ -93,8 +93,8 @@ DB_PATH   = os.path.join(BASE_DIR, 'verdana.db')
 UPLOAD_DIR = os.path.join(BASE_DIR, 'static', 'uploads')
 SECRET_KEY = os.environ.get('SECRET_KEY', 'verdana-secret-change-in-prod-2026')
 
-# Point to the trained model (place plant_disease_model.h5 next to app.py)
-_model_path = os.path.join(BASE_DIR, 'plant_disease_model.h5')
+# Point to the trained TFLite model
+_model_path = os.path.join(BASE_DIR, 'plant_disease_model.tflite')
 
 app = Flask(__name__, static_folder='static')
 app.config['MAX_CONTENT_LENGTH'] = 10 * 1024 * 1024   # 10 MB
@@ -517,7 +517,14 @@ def predict():
         model = get_model()
         img_bytes = io.BytesIO(file.read())
         tensor    = preprocess_image(img_bytes)
-        preds     = model.predict(tensor, verbose=0)[0]          # shape (3,)
+        
+        input_details = model.get_input_details()
+        output_details = model.get_output_details()
+        
+        model.set_tensor(input_details[0]['index'], tensor)
+        model.invoke()
+        preds = model.get_tensor(output_details[0]['index'])[0]
+
         idx       = int(np.argmax(preds))
         disease   = CLASS_NAMES[idx]
         confidence = round(float(preds[idx]) * 100, 1)
